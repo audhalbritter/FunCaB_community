@@ -82,3 +82,21 @@ if (!exists("fig_removed_biomass_comparison")) tar_load(fig_removed_biomass_comp
 
 fig_removed_biomass_comparison
 ```
+
+## Community composition
+
+PCA of species composition across removal treatments and the climate grid (@fig-pca).
+
+```{r}
+#| label: fig-pca
+#| fig-cap: "PCA of plant community composition by removal treatment across the climate grid. Points are plot–year observations; paths connect years within plots. Filled points mark the first survey year."
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-height: 8
+#| fig-width: 10
+
+if (!exists("fig_pca")) tar_load(fig_pca)
+
+fig_pca
+```

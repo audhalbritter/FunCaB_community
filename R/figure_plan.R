@@ -1,16 +1,13 @@
 # Figure plan for FunCaB Community Analysis
 figure_plan <- list(
 
-  #tar_target(
-  #  name = fig_pca,
-  #  command = make_sp_pca_figure(community_pca)
-  #),
-
+# functional group richness
   tar_target(
     name = fig_fg_richness_effects,
     command = plot_model_effects(fg_richness_analysis$model_2way)
   ),
 
+# functional group identity
   tar_target(
     name = fig_fg_identity_effects,
     command = plot_model_effects(fg_identity_analysis$model_2way)
