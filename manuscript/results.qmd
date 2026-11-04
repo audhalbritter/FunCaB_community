@@ -9,15 +9,17 @@ library(targets)
 library(tarchetypes)
 library(gt)
 
+targets::tar_config_set(store = here::here("_targets"))
+source(here::here("R/functions/tidymodels.r"))
 ```
 
 ## Results
 
-### PART 1: General models
+### PART 1: Whole community analysis
 
 ### Functional group richness effect
 
-Test overall effects of number of functional groups (functional group richness) on standing biomass across the climate grid.
+Test overall effects of number of functional groups (functional group richness) on standing biomass across the climate grid. Functional group richness increases standing biomass (@fig-fg-richness-effects, @tbl-fg-richness-tidy-table). There are no interactive effects, and temperature and precipitation alone have no effect on standing biomass.
 
 ```{r}
 #| label: fig-fg-richness-effects
@@ -26,27 +28,36 @@ Test overall effects of number of functional groups (functional group richness) 
 #| warning: false
 #| message: false
 
-# Load the figure from targets
-tar_load(fig_fg_richness_effects)
-
-# Display plot
-fig_fg_richness_effects
+tar_read(fig_fg_richness_effects)
 ```
 
 ```{r}
-#| label: fg-richness-tidy-table
+#| label: tbl-fg-richness-tidy-table
 #| echo: false
 #| warning: false
 #| message: false
 
 # Load the tidy model output for fg_richness
-if (!exists("fg_richness_tidy")) tar_load(fg_richness_tidy)
+tar_load(fg_richness_tidy)
 
 pretty_model_table(fg_richness_tidy)
 
 ```
 
 ### Functional group identity effects
+
+Functional group identity effects on standing biomass (@fig-fg-identity-interactions, @tbl-fg-identity-tidy-table). Standing biomass decreases at warmer sites when forbs are removed. Standing biomass increases at wetter sites when forbs or graminoids are removed.
+
+```{r}
+#| label: fig-fg-identity-interactions
+#| fig-cap: "Interaction effects from the mixed-effects model for functional group identity on standing biomass. The plot displays estimated interaction effects between functional group identity and environmental variables."
+#| echo: false
+#| warning: false
+#| message: false
+
+# Load the figure from targets
+tar_read(fig_fg_identity_interactions)
+```
 
 ```{r}
 #| label: fg-identity-tidy-table
@@ -60,53 +71,69 @@ if (!exists("fg_identity_tidy")) tar_load(fg_identity_tidy)
 pretty_model_table(fg_identity_tidy)
 ```
 
-```{r}
-#| label: fig-fg-identity-interactions
-#| fig-cap: "Interaction effects from the mixed-effects model for functional group identity on standing biomass. The plot displays estimated interaction effects between functional group identity and environmental variables."
-#| echo: false
-#| eval: false
-#| warning: false
-#| message: false
+### Functional group removed (factorial)
 
-# Load the figure from targets
-if (!exists("fig_fg_identity_interactions")) tar_load(fig_fg_identity_interactions)
+-   Total standing biomass decreases when graminoids in combination with forbs or bryophytes are removed. There is a trend for F:B.
 
-# Display plot
-fig_fg_identity_interactions
-```
-
-### Functional group biomass
+-   Biomass also decreases in wetter places when bryophytes are removed.
 
 ```{r}
-#| label: results-total-biomass-model
-#| echo: false
-#| warning: false
-#| message: false
-
-# load in results
-tar_load(fg_biomass_total_compensation_analysis)
-
-
-fg_biomass_total_compensation_analysis
-```
-
-```{r}
-#| label: results-total-biomass-figure
+#| label: fig-results-total-biomass
 #| fig-cap: "Biomass varies with temperature"
 #| echo: false
 #| warning: false
 #| message: false
 
 # load in figure
-tar_load(fig_total_biomass_treatment_temperature)
+tar_read(fig_total_biomass_treatment_temperature)
 
-# Display plot
-fig_total_biomass_treatment_temperature
 ```
 
+```{r}
+#| label: tbl-results-total-biomass-model
+#| tbl-cap: "Fixed-effect estimates from the total standing biomass model (factorial functional group removals and climate)."
+#| echo: false
+#| warning: false
+#| message: false
+
+tar_load(total_comp_model_results)
+
+total_comp_model_results |>
+  mutate(p.value = format.pval(p.value, digits = 3, eps = 0.001)) |>
+  gt() |>
+  cols_label(
+    term = "Model term",
+    estimate = "Estimate",
+    std.error = "SE",
+    conf.low = "Lower 95% CI",
+    conf.high = "Upper 95% CI",
+    p.value = md("*p*-value")
+  ) |>
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      rows = total_comp_model_results$p.value < 0.05
+    )
+  )
+```
+
+```{r}
+#| label: tbl-results-total-biomass-contrasts
+#| tbl-cap: "Model results for the total biomass model"
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in results
+tar_load(total_comp_contrasts_mean_climate_table)
+
+total_comp_contrasts_mean_climate_table
+```
 
 ### Part 2: Focal functional group effects
+
 #### Bryophytes
+
 ```{r}
 #| label: results-bryophyte-biomass-model
 #| echo: false
@@ -146,8 +173,8 @@ tar_load(fig_B_comp_temperature_contrast)
 fig_B_comp_temperature_contrast
 ```
 
-
 #### Graminoids
+
 ```{r}
 #| label: results-graminoid-biomass-model
 #| echo: false
@@ -188,6 +215,7 @@ fig_G_comp_temperature_contrast
 ```
 
 #### Forbs
+
 ```{r}
 #| label: results-forb-biomass-model
 #| echo: false
@@ -226,8 +254,6 @@ tar_load(fig_F_comp_temperature_contrast)
 
 fig_F_comp_temperature_contrast
 ```
-
-
 
 ### Functional group richness effect
 
