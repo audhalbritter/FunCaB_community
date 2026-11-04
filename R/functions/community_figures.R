@@ -23,13 +23,18 @@ make_sp_pca_figure <- function(community_pca){
     coord_equal() +
     # scale_linetype_manual(values = c("dashed", "solid")) +
     # scale_shape_manual(values = c(1, 17)) +
-    labs(x = glue("PCA1 ({round(e_B[1] * 100, 1)}%)"),
-    y = glue("PCA2 ({round(e_B[2] * 100, 1)}%)")) +
+    labs(
+      x = glue("PCA1 ({round(e_B[1] * 100, 1)}%)"),
+      y = glue("PCA2 ({round(e_B[2] * 100, 1)}%)"),
+      colour = "Removal",
+      linetype = "Removal",
+      shape = "Year"
+    ) +
     facet_grid(temperature_level ~ precipitation_level) +
     theme_bw() +
     theme(text = element_text(size = 13),
-          legend.box="vertical",
-          legend.position = "none",
+          legend.box = "vertical",
+          legend.position = "bottom",
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank())
 
