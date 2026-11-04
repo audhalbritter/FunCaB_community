@@ -1,0 +1,84 @@
+---
+title: "Supporting Information"
+format: html
+editor: visual
+crossref:
+  fig-title: "Figure S"
+  fig-prefix: "Figure S"
+---
+
+```{r}
+#| label: set-up-si-biomass
+#| echo: false
+#| message: false
+library(targets)
+library(tarchetypes)
+```
+
+## Biomass standardization figures
+
+Standing biomass figures use remaining biomass from the 2022 full harvest (@fig-standing-biomass-stacked).
+
+```{r}
+#| label: fig-standing-biomass-stacked
+#| fig-cap: "Standing biomass (remaining biomass in 2022) by functional group and treatment across the climate grid"
+#| echo: false
+#| warning: false
+#| message: false
+
+if (!exists("fig_standing_biomass_stacked")) tar_load(fig_standing_biomass_stacked)
+
+fig_standing_biomass_stacked
+```
+
+Removed-biomass is the 2015 removal harvest, standardised to site-level full-removal (FGB) means.
+
+```{r}
+#| label: fig-removed-biomass-stacked
+#| fig-cap: "Removed biomass in 2015 by functional group and treatment across the climate grid"
+#| echo: false
+#| warning: false
+#| message: false
+
+if (!exists("fig_removed_biomass_stacked")) tar_load(fig_removed_biomass_stacked)
+
+fig_removed_biomass_stacked
+```
+
+```{r}
+#| label: fig-prop-removed-biomass-stacked
+#| fig-cap: "Proportional removed biomass in 2015 by functional group and treatment across the climate grid"
+#| echo: false
+#| warning: false
+#| message: false
+
+if (!exists("fig_prop_removed_biomass_stacked")) tar_load(fig_prop_removed_biomass_stacked)
+
+fig_prop_removed_biomass_stacked
+```
+
+Total removed biomass in control plots in 2015.
+
+```{r}
+#| label: fig-control-biomass-by-site
+#| fig-cap: "Total biomass removed in control plots (FGB) in 2015 by site showing variation in baseline biomass across sites"
+#| echo: false
+#| warning: false
+#| message: false
+
+if (!exists("fig_control_biomass_by_site")) tar_load(fig_control_biomass_by_site)
+
+fig_control_biomass_by_site
+```
+
+```{r}
+#| label: fig-removed-biomass-comparison
+#| fig-cap: "Comparison of raw removed biomass and proportional removed biomass in 2015 showing the effect of site-specific standardization"
+#| echo: false
+#| warning: false
+#| message: false
+
+if (!exists("fig_removed_biomass_comparison")) tar_load(fig_removed_biomass_comparison)
+
+fig_removed_biomass_comparison
+```
