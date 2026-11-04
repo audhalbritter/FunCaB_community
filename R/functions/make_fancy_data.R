@@ -51,6 +51,23 @@ make_fancy_data <- function(data, gridded_climate, fix_treatment = TRUE){
 
 
 
+#' Clean compensation-model term names for tables/figures
+#' @param tidy_df A tidy model output with a `term` column
+#' @return The same data frame with shortened term labels
+#'   (G_treat/F_treat/B_treat → G/F/B; temperature_scaled → T; precipitation_scaled → P)
+clean_comp_model_terms <- function(tidy_df) {
+  tidy_df |>
+    dplyr::mutate(
+      term = term |>
+        stringr::str_replace_all("G_treat", "G") |>
+        stringr::str_replace_all("F_treat", "F") |>
+        stringr::str_replace_all("B_treat", "B") |>
+        stringr::str_replace_all("temperature_scaled", "T") |>
+        stringr::str_replace_all("precipitation_scaled", "P")
+    )
+}
+
+
 #rename traits to fancy names for figures
 
 fancy_trait_name_dictionary <- function(dat){

@@ -39,151 +39,72 @@ analysis_plan <- list(
       )
     }
   ),
+
   tar_target(
     name = fg_identity_tidy,
     command = clean_model_terms(tidy_model(fg_identity_analysis$model_2way))
   ),
 
-  # make pca
-  tar_target(
-    name = community_pca,
-    command = make_sp_pca(cover_data)
-  ),
-
-
-  tar_target(
-    name = fg_biomass_analysis,
-    command = {
-      joined_dat <- sb_long |>
-      tidylog::left_join(removed_biomass_long, by = c("siteID", "blockID", "plotID", "fg_removed", "fg_remaining", "fg_richness", "temperature_level", "precipitation_level", "temperature_scaled", "precipitation_scaled")) |>
-        mutate(combined_fg_trt = paste(fg_removed, removed_fg, sep = "_"))
-
-      fit_mod <- lmerTest::lmer(standing_biomass ~ 0 + prop_removed_biomass_trt + removed_fg + (1|siteID), data = joined_dat)
-      summary(fit_mod)
-
-      fit_mod <- lmerTest::lmer(standing_biomass ~ 0 + prop_removed_biomass_trt*removed_fg*fg_removed + (1|siteID), data = joined_dat)
-      summary(fit_mod)
-            # maybe we want this to be a zero-intercept model. At the moment this compares to bryophytes, which is #not so interesting.
-
-}
+# Effect of factorial functional group removal on total standing biomass
+tar_target(
+  name = mod_total_comp,
+  command = glmmTMB(
+    total_biomass ~
+      (G_treat + F_treat + B_treat)^2 +
+      temperature_scaled * precipitation_scaled +
+      (G_treat + F_treat + B_treat):(temperature_scaled + precipitation_scaled) +
+      (1 | siteID/blockID),
+    family = Gamma(link = "log"),
+    data = standing_biomass_22_wide
+  )
 ),
 
 tar_target(
-    name = single_fg_biomass_analysis,
-    command = {
-      joined_dat <- sb_long |>
-      tidylog::left_join(removed_biomass_long, by = c("siteID", "blockID", "plotID", "fg_removed", "fg_remaining", "fg_richness", "temperature_level", "precipitation_level", "temperature_scaled", "precipitation_scaled")) |>
-        mutate(combined_fg_trt = paste(fg_removed, removed_fg, sep = "_"))
-
-      # Function to fit models with error handling
-      fit_single_fg_model <- function(data, formula) {
-        # Check if we have enough levels for factors
-        if (n_distinct(data$fg_removed) < 2) {
-          return(NULL)  # Skip if not enough levels
-        }
-        tryCatch({
-          lmerTest::lmer(as.formula(formula), data = data)
-        }, error = function(e) {
-          message(paste("Model failed:", e$message))
-          return(NULL)
-        })
-      }
-
-      # Create model combinations
-      model_combinations <- expand_grid(
-        fg_remaining = c("F", "G", "B"),
-        removed_fg = c("F", "G", "B"),
-        env_var = c("temperature_scaled", "precipitation_scaled")
-      ) %>%
-        # Filter to valid combinations (remaining != removed)
-        filter(fg_remaining != removed_fg) %>%
-        # Create model formulas
-        mutate(
-          model_formula = case_when(
-            env_var == "temperature_scaled" ~ "standing_biomass ~ prop_removed_biomass_trt * fg_removed * temperature_scaled + (1|siteID)",
-            env_var == "precipitation_scaled" ~ "standing_biomass ~ prop_removed_biomass_trt * fg_removed * precipitation_scaled + (1|siteID)"
-          )
-        )
-
-      # Fit models for each combination
-      single_fg_models <- model_combinations %>%
-        rowwise() %>%
-        mutate(
-          # Filter data for this combination
-          model_data = list(
-            joined_dat %>%
-              filter(fg_remaining == .data$fg_remaining, removed_fg == .data$removed_fg)
-          )
-        ) %>%
-        ungroup() %>%
-        mutate(
-          n_obs = map_int(model_data, nrow),
-          # Fit model if we have enough data
-          model = map2(model_data, model_formula, ~ {
-            if (.y >= 10) {  # Minimum sample size check
-              fit_single_fg_model(.x, .y)
-            } else {
-              NULL
-            }
-          })
-        ) %>%
-        # Add model summaries for successful models
-        mutate(
-          model_summary = map(model, ~ if (!is.null(.x)) broom::tidy(.x) else NULL),
-          model_anova = map(model, ~ if (!is.null(.x)) anova(.x) else NULL)
-        ) %>%
-        # Remove failed models
-        filter(!map_lgl(model, is.null))
-
-      # Return the results
-      single_fg_models
-
-}
+  name = total_comp_model_results,
+  command = broom.mixed::tidy(
+    mod_total_comp,
+    effects = "fixed",
+    conf.int = TRUE
+    ) |>
+      clean_comp_model_terms() |>
+      mutate(
+        estimate = round(estimate, 3),
+        std.error = round(std.error, 3),
+        conf.low = round(conf.low, 3),
+        conf.high = round(conf.high, 3),
+        p.value = round(p.value, 3)
+      ) |>
+      select(-effect, -component)
 ),
 
+tar_target(
+  name = total_comp_emm_mean_climate,
+  command = emmeans(
+    mod_total_comp,
+    ~ G_treat * F_treat * B_treat,
+    type = "response",
+    at = list(
+      temperature_scaled = 1.05,
+      precipitation_scaled = 2.21
+    )
+  )
+),
 
 tar_target(
-  name = fg_biomass_total_compensation_analysis,
-  command = {
-    m_total <- glmmTMB(
-      total_biomass ~
-        (G_treat + F_treat + B_treat)^2 +
-        temperature_scaled * precipitation_scaled +
-        (G_treat + F_treat + B_treat):(temperature_scaled + precipitation_scaled) +
-        (1 | siteID/blockID),
-      family = Gamma(link = "log"),
-      data = standing_biomass_22_wide
-    )
+  name = total_comp_contrasts_mean_climate,
+  command = contrast(
+    total_comp_emm_mean_climate,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  )
+),
 
-    tidy(m_total)
-
-    emm_total <- emmeans(
-      m_total,
-      ~ G_treat * F_treat * B_treat,
-      type = "response",
-      at = list(
-        temperature_scaled = 1.05,
-        precipitation_scaled = 2.21
-      )
-    )
-
-    emm_total
-
-    contrasts_total <- contrast(
-      emm_total,
-      method = "trt.vs.ctrl",
-      ref = 1,
-      adjust = "holm"
-    )
-
-
-    summary(contrasts_total, infer = c(TRUE, TRUE)) |>
-      tibble() |>
-      gt()
-
-
-  }
-
+tar_target(
+  name = total_comp_contrasts_mean_climate_table,
+  command = summary(total_comp_contrasts_mean_climate, infer = c(TRUE, TRUE)) |>
+    tibble() |>
+    gt()
 ),
 
 
@@ -822,7 +743,7 @@ tar_target(
           dplyr::mutate(focal_fg = fg)
       })
     }
-  )
+  ),
 
 
   # 1. Effect of remaining/removed biomass on biomass of focal PFG
@@ -893,5 +814,95 @@ tar_target(
 
   #   }
   # ),
+
+  tar_target(
+    name = fg_biomass_analysis,
+    command = {
+      joined_dat <- sb_long |>
+      tidylog::left_join(removed_biomass_long, by = c("siteID", "blockID", "plotID", "fg_removed", "fg_remaining", "fg_richness", "temperature_level", "precipitation_level", "temperature_scaled", "precipitation_scaled")) |>
+        mutate(combined_fg_trt = paste(fg_removed, removed_fg, sep = "_"))
+
+      fit_mod <- lmerTest::lmer(standing_biomass ~ 0 + prop_removed_biomass_trt + removed_fg + (1|siteID), data = joined_dat)
+      summary(fit_mod)
+
+      fit_mod <- lmerTest::lmer(standing_biomass ~ 0 + prop_removed_biomass_trt*removed_fg*fg_removed + (1|siteID), data = joined_dat)
+      summary(fit_mod)
+            # maybe we want this to be a zero-intercept model. At the moment this compares to bryophytes, which is #not so interesting.
+
+}
+),
+
+tar_target(
+    name = single_fg_biomass_analysis,
+    command = {
+      joined_dat <- sb_long |>
+      tidylog::left_join(removed_biomass_long, by = c("siteID", "blockID", "plotID", "fg_removed", "fg_remaining", "fg_richness", "temperature_level", "precipitation_level", "temperature_scaled", "precipitation_scaled")) |>
+        mutate(combined_fg_trt = paste(fg_removed, removed_fg, sep = "_"))
+
+      # Function to fit models with error handling
+      fit_single_fg_model <- function(data, formula) {
+        # Check if we have enough levels for factors
+        if (n_distinct(data$fg_removed) < 2) {
+          return(NULL)  # Skip if not enough levels
+        }
+        tryCatch({
+          lmerTest::lmer(as.formula(formula), data = data)
+        }, error = function(e) {
+          message(paste("Model failed:", e$message))
+          return(NULL)
+        })
+      }
+
+      # Create model combinations
+      model_combinations <- expand_grid(
+        fg_remaining = c("F", "G", "B"),
+        removed_fg = c("F", "G", "B"),
+        env_var = c("temperature_scaled", "precipitation_scaled")
+      ) %>%
+        # Filter to valid combinations (remaining != removed)
+        filter(fg_remaining != removed_fg) %>%
+        # Create model formulas
+        mutate(
+          model_formula = case_when(
+            env_var == "temperature_scaled" ~ "standing_biomass ~ prop_removed_biomass_trt * fg_removed * temperature_scaled + (1|siteID)",
+            env_var == "precipitation_scaled" ~ "standing_biomass ~ prop_removed_biomass_trt * fg_removed * precipitation_scaled + (1|siteID)"
+          )
+        )
+
+      # Fit models for each combination
+      single_fg_models <- model_combinations %>%
+        rowwise() %>%
+        mutate(
+          # Filter data for this combination
+          model_data = list(
+            joined_dat %>%
+              filter(fg_remaining == .data$fg_remaining, removed_fg == .data$removed_fg)
+          )
+        ) %>%
+        ungroup() %>%
+        mutate(
+          n_obs = map_int(model_data, nrow),
+          # Fit model if we have enough data
+          model = map2(model_data, model_formula, ~ {
+            if (.y >= 10) {  # Minimum sample size check
+              fit_single_fg_model(.x, .y)
+            } else {
+              NULL
+            }
+          })
+        ) %>%
+        # Add model summaries for successful models
+        mutate(
+          model_summary = map(model, ~ if (!is.null(.x)) broom::tidy(.x) else NULL),
+          model_anova = map(model, ~ if (!is.null(.x)) anova(.x) else NULL)
+        ) %>%
+        # Remove failed models
+        filter(!map_lgl(model, is.null))
+
+      # Return the results
+      single_fg_models
+
+}
+)
 
 )
