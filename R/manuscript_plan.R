@@ -20,9 +20,15 @@ manuscript_plan <- list(
 
   # Manuscript
   tar_quarto(
-    name = manuscript,
-    path = "manuscript/main_manuscript.qmd"
-  ),
+  name = manuscript,
+  path = "manuscript/main_manuscript.qmd",
+  extra_files = c(
+    "manuscript/introduction.qmd",
+    "manuscript/methods.qmd",
+    "manuscript/results.qmd",
+    "manuscript/discussion.qmd"
+  )
+),
 
   # Supporting information
   tar_quarto(
