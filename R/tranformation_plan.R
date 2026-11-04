@@ -15,11 +15,13 @@ transformation_plan <- list(
 
       left_join(
         dat |>
+        # annual precipitation
           group_by(year, siteID) |>
           summarise(precipitation = sum(precipitation, na.rm = TRUE)) |>
           ungroup() |>
           group_by(siteID) |>
           summarise(precipitation = mean(precipitation, na.rm = TRUE)),
+        # summer temperature
         dat |>
           mutate(month = month(date)) |>
           filter(month %in% c(6, 7, 8)) |>
@@ -34,7 +36,7 @@ transformation_plan <- list(
   ),
 
   # prep biomass
-  # 2015-2021
+  # Removed biomass (2015-2021)
   tar_target(
     name = biomass,
     command = removed_biomass_raw |>
@@ -60,7 +62,7 @@ transformation_plan <- list(
       )
   ),
 
-  # prep biomass (2022 only)
+  # prep standingbiomass (2022 only)
   tar_target(
     name = biomass_22,
     command = removed_biomass_final_raw %>%
