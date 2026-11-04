@@ -7,6 +7,8 @@ editor: visual
 #| echo: false
 library(targets)
 library(tarchetypes)
+library(gt)
+library(tidyverse)
 
 ```
 
@@ -44,15 +46,51 @@ Plant community composition recorded annually between 2015 and 2019 across all e
 
 Using *removed biomass* in 2015 and *standing biomass* in 2022 (remaining biomass after removal).
 
-Calculating three treatments:
+Calculate three functional group removal treatments:
 
 -   functional group richness (number of functional group present: 0, 1, 2, 3)
 
 -   functional group identity (which functional group is present: B, F, GF,...)
 
--   Biomass compensation
+-   factorial functional group remaining
 
--   Functional group biomass compensation
+```{r}
+#| label: tbl-removal-treatments
+#| tbl-cap: "Factorial functional group removal treatments"
+#| echo: false
+#| warning: false
+#| message: false
+
+tar_load(standing_biomass_22_wide)
+
+standing_biomass_22_wide |>
+  distinct(fg_removed, G_treat, F_treat, B_treat) |>
+  mutate(
+    n_groups_removed = G_treat + F_treat + B_treat,
+    removal = factor(
+      fg_removed,
+      levels = c("none", "G", "F", "B", "GF", "GB", "FB"),
+      labels = c(
+        "None",
+        "Graminoids",
+        "Forbs",
+        "Bryophytes",
+        "Graminoids + forbs",
+        "Graminoids + bryophytes",
+        "Forbs + bryophytes"
+      )
+    )
+  ) |>
+  arrange(n_groups_removed, removal) |>
+  select(removal, G_treat, F_treat, B_treat) |>
+  gt() |>
+  cols_label(
+    removal = "Removal",
+    G_treat = "Graminoids",
+    F_treat = "Forbs",
+    B_treat = "Bryophytes"
+  )
+```
 
 PART 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
 
