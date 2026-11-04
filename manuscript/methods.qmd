@@ -38,22 +38,22 @@ Plant community composition recorded annually between 2015 and 2019 across all e
 
 ### Data preparation
 
-*Removed biomass*: 2015 removal
-
-*Standing biomass*: 2022 remaining biomass after removal.
-
-**Biomass standardization:** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
-
-Additional figures illustrating biomass standardization (2015 removed biomass and 2022 standing biomass) are provided in the Supplementary Information (`si_biomass_standardization.qmd`).
+**Biomass standardization (not used!):** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
 
 ### Analysis
 
--   Calculate cumulative removed biomass per treatment and functional group
+Using *removed biomass* in 2015 and *standing biomass* in 2022 (remaining biomass after removal).
 
--   Calculate diversity indices
+Calculating three treatments:
 
--   Part 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
+-   functional group richness (number of functional group present: 0, 1, 2, 3)
 
--   We ran the same analysis for each functional group separate (e.g. plots were graminoids present, FB, B, none)
+-   functional group identity (which functional group is present: B, F, GF,...)
 
--   Something with diversity
+-   Biomass compensation
+
+-   Functional group biomass compensation
+
+PART 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
+
+PART 2: Biomass compensation within each remaining functional group
