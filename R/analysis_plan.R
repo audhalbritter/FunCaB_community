@@ -102,9 +102,49 @@ tar_target(
 
 tar_target(
   name = total_comp_contrasts_mean_climate_table,
-  command = summary(total_comp_contrasts_mean_climate, infer = c(TRUE, TRUE)) |>
-    tibble() |>
-    gt()
+  command = {
+    contrast_levels <- c(
+      "Graminoids",
+      "Forbs",
+      "Bryophytes",
+      "Graminoids + Forbs",
+      "Graminoids + Bryophytes",
+      "Forbs + Bryophytes",
+      "Graminoids + Forbs + Bryophytes"
+    )
+
+    contrasts_df <- summary(total_comp_contrasts_mean_climate, infer = c(TRUE, TRUE)) |>
+      tibble() |>
+      mutate(
+        contrast = clean_comp_contrast_labels(contrast),
+        contrast = factor(contrast, levels = contrast_levels),
+        ratio = round(ratio, 2),
+        SE = round(SE, 2),
+        asymp.LCL = round(asymp.LCL, 2),
+        asymp.UCL = round(asymp.UCL, 2),
+        z.ratio = round(z.ratio, 2),
+        p_numeric = p.value,
+        p.value = format.pval(p.value, digits = 3, eps = 0.001)
+      ) |>
+      arrange(contrast)
+
+    contrasts_df |>
+      select(contrast, ratio, SE, asymp.LCL, asymp.UCL, z.ratio, p.value) |>
+      gt() |>
+      cols_label(
+        contrast = "Removal (vs none)",
+        ratio = "Biomass ratio",
+        SE = "SE",
+        asymp.LCL = "Lower 95% CI",
+        asymp.UCL = "Upper 95% CI",
+        z.ratio = "z",
+        p.value = md("*p*-value")
+      ) |>
+      tab_style(
+        style = cell_text(weight = "bold"),
+        locations = cells_body(rows = contrasts_df$p_numeric < 0.05)
+      )
+  }
 ),
 
 
@@ -677,7 +717,7 @@ tar_target(
 
 
 
-
+### Is this stuff still needed?
 
 
     # Create a long dataset for each focal functional group present in fg_remaining

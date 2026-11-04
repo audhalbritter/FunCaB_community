@@ -67,6 +67,30 @@ clean_comp_model_terms <- function(tidy_df) {
     )
 }
 
+#' Turn emmeans trt.vs.ctrl contrast labels into readable removal names
+#' @param contrast Character/factor vector of contrasts like
+#'   "G_treat1 F_treat0 B_treat0 / G_treat0 F_treat0 B_treat0"
+#' @return Character vector, e.g. "Graminoids", "Graminoids + forbs"
+#'   (always relative to none removed)
+clean_comp_contrast_labels <- function(contrast) {
+  left <- stringr::str_split_fixed(as.character(contrast), " / ", n = 2)[, 1]
+
+  purrr::map_chr(left, function(x) {
+    removed <- c(
+      G = stringr::str_detect(x, "G_treat1"),
+      F = stringr::str_detect(x, "F_treat1"),
+      B = stringr::str_detect(x, "B_treat1")
+    )
+    names_removed <- c(G = "Graminoids", F = "Forbs", B = "Bryophytes")[removed]
+
+    if (length(names_removed) == 0) {
+      "None"
+    } else {
+      paste(names_removed, collapse = " + ")
+    }
+  })
+}
+
 
 #rename traits to fancy names for figures
 

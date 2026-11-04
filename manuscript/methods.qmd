@@ -5,6 +5,7 @@ editor: visual
 ```{r}
 #| label: set-up-methods
 #| echo: false
+#| messages: false
 library(targets)
 library(tarchetypes)
 library(gt)
@@ -93,5 +94,15 @@ standing_biomass_22_wide |>
 ```
 
 PART 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
+
+**Functional group richness and identity:** compare full model with 2-way interaction model
+
+*Full model*: standing biomass \~ fg_richness \* precipitation_scaled \* temperature_scaled + (1\|siteID)
+
+*2-way model*: standing biomass \~ fg_richness + precipitation_scaled + temperature_scaled + fg_richness:precipitation_scaled + fg_richness:temperature_scaled + precipitation_scaled:temperature_scaled + (1\|siteID)
+
+**Factorial functional group:** only 2-way interactions
+
+glmmTMB( total_biomass \~ (G_treat + F_treat + B_treat)\^2 + temperature_scaled \* precipitation_scaled + (G_treat + F_treat + B_treat):(temperature_scaled + precipitation_scaled) + (1 \| siteID/blockID)
 
 PART 2: Biomass compensation within each remaining functional group

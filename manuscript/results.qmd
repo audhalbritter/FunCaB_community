@@ -60,7 +60,7 @@ tar_read(fig_fg_identity_interactions)
 ```
 
 ```{r}
-#| label: fg-identity-tidy-table
+#| label: tbl-fg-identity-tidy-table
 #| echo: false
 #| warning: false
 #| message: false
@@ -76,6 +76,8 @@ pretty_model_table(fg_identity_tidy)
 -   Total standing biomass decreases when graminoids in combination with forbs or bryophytes are removed. There is a trend for F:B.
 
 -   Biomass also decreases in wetter places when bryophytes are removed.
+
+-   Contrasts show that when bryophytes or more than two functional groups are removed, total biomass decreases.
 
 ```{r}
 #| label: fig-results-total-biomass
@@ -130,9 +132,9 @@ tar_load(total_comp_contrasts_mean_climate_table)
 total_comp_contrasts_mean_climate_table
 ```
 
-### Part 2: Focal functional group effects
+### PART 2: Focal functional group effects
 
-#### Bryophytes
+#### Bryophytes removed
 
 ```{r}
 #| label: results-bryophyte-biomass-model
