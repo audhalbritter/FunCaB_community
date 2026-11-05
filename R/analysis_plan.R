@@ -375,14 +375,15 @@ tar_target(
 # ============================================================
 
 tar_target(
-  F_comp_dat,
-  standing_biomass_22_wide |>
+  name = F_comp_dat,
+  command = standing_biomass_22_wide |>
     filter(F_treat == 0, F > 0)
+
 ),
 
 tar_target(
-  mod_F_comp,
-  glmmTMB(
+  name = mod_F_comp,
+  command = glmmTMB(
     F ~
       G_treat * B_treat * temperature_scaled +
       G_treat * B_treat * precipitation_scaled +
@@ -391,12 +392,13 @@ tar_target(
     family = Gamma(link = "log"),
     data = F_comp_dat
   )
+
 ),
 
 # Fixed-effect coefficient output
 tar_target(
-  F_comp_model_results,
-  broom.mixed::tidy(
+  name = F_comp_model_results,
+  command = broom.mixed::tidy(
     mod_F_comp,
     effects = "fixed",
     conf.int = TRUE
@@ -410,11 +412,12 @@ tar_target(
       p.value = round(p.value, 3)
     ) |>
     select(-effect, -component)
+
 ),
 
 tar_target(
-  F_comp_model_results_table,
-  {
+  name = F_comp_model_results_table,
+  command = {
     results_df <- F_comp_model_results |>
       mutate(p.value = format.pval(p.value, digits = 3, eps = 0.001))
 
@@ -440,29 +443,32 @@ tar_target(
         )
       )
   }
+
 ),
 
 # DHARMa diagnostics
 tar_target(
-  F_comp_dharma,
-  {
+  name = F_comp_dharma,
+  command = {
     set.seed(123)
     DHARMa::simulateResiduals(
       fittedModel = mod_F_comp,
       n = 1000
     )
   }
+
 ),
 
 tar_target(
-  F_comp_dharma_plot,
-  plot(F_comp_dharma)
+  name = F_comp_dharma_plot,
+  command = plot(F_comp_dharma)
+
 ),
 
 # Contrasts at mean climate
 tar_target(
-  F_comp_emm_mean_climate,
-  emmeans::emmeans(
+  name = F_comp_emm_mean_climate,
+  command = emmeans::emmeans(
     mod_F_comp,
     ~ G_treat * B_treat,
     at = list(
@@ -470,11 +476,12 @@ tar_target(
       precipitation_scaled = 2.21
     )
   )
+
 ),
 
 tar_target(
-  F_comp_contrasts_mean_climate,
-  emmeans::contrast(
+  name = F_comp_contrasts_mean_climate,
+  command = emmeans::contrast(
     F_comp_emm_mean_climate,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -482,11 +489,12 @@ tar_target(
   ) |>
     summary(type = "response", infer = c(TRUE, TRUE)) |>
     as.data.frame()
+
 ),
 
 tar_target(
-  F_comp_contrasts_mean_climate_table,
-  F_comp_contrasts_mean_climate |>
+  name = F_comp_contrasts_mean_climate_table,
+  command = F_comp_contrasts_mean_climate |>
     mutate(
       ratio = round(ratio, 2),
       asymp.LCL = round(asymp.LCL, 2),
@@ -504,12 +512,13 @@ tar_target(
       ratio = "Biomass ratio",
       p.value = gt::md("Adjusted *p*-value")
     )
+
 ),
 
 # Temperature-dependent contrasts; precipitation fixed at mean
 tar_target(
-  F_comp_emm_temperature,
-  emmeans::emmeans(
+  name = F_comp_emm_temperature,
+  command = emmeans::emmeans(
     mod_F_comp,
     ~ G_treat * B_treat | temperature_scaled,
     at = list(
@@ -517,11 +526,12 @@ tar_target(
       precipitation_scaled = 2.21
     )
   )
+
 ),
 
 tar_target(
-  F_comp_contrasts_temperature,
-  emmeans::contrast(
+  name = F_comp_contrasts_temperature,
+  command = emmeans::contrast(
     F_comp_emm_temperature,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -529,13 +539,14 @@ tar_target(
   ) |>
     summary(type = "response", infer = c(TRUE, TRUE)) |>
     as.data.frame()
+
 ),
 
 
 # Precipitation-dependent contrasts; temperature fixed at mean
 tar_target(
-  F_comp_emm_precipitation,
-  emmeans::emmeans(
+  name = F_comp_emm_precipitation,
+  command = emmeans::emmeans(
     mod_F_comp,
     ~ G_treat * B_treat | precipitation_scaled,
     at = list(
@@ -543,11 +554,12 @@ tar_target(
       temperature_scaled = 1.05
     )
   )
+
 ),
 
 tar_target(
-  F_comp_contrasts_precipitation,
-  emmeans::contrast(
+  name = F_comp_contrasts_precipitation,
+  command = emmeans::contrast(
     F_comp_emm_precipitation,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -555,6 +567,7 @@ tar_target(
   ) |>
     summary(type = "response", infer = c(TRUE, TRUE)) |>
     as.data.frame()
+
 ),
 
 
@@ -565,14 +578,15 @@ tar_target(
 # ============================================================
 
 tar_target(
-  G_comp_dat,
-  standing_biomass_22_wide |>
+  name = G_comp_dat,
+  command = standing_biomass_22_wide |>
     filter(G_treat == 0, G > 0)
+
 ),
 
 tar_target(
-  mod_G_comp,
-  glmmTMB(
+  name = mod_G_comp,
+  command = glmmTMB(
     G ~
       F_treat * B_treat * temperature_scaled +
       F_treat * B_treat * precipitation_scaled +
@@ -581,12 +595,13 @@ tar_target(
     family = Gamma(link = "log"),
     data = G_comp_dat
   )
+
 ),
 
 # Fixed-effect coefficient output
 tar_target(
-  G_comp_model_results,
-  broom.mixed::tidy(
+  name = G_comp_model_results,
+  command = broom.mixed::tidy(
     mod_G_comp,
     effects = "fixed",
     conf.int = TRUE
@@ -600,11 +615,12 @@ tar_target(
       p.value = round(p.value, 3)
     ) |>
     select(-effect, -component)
+
 ),
 
 tar_target(
-  G_comp_model_results_table,
-  {
+  name = G_comp_model_results_table,
+  command = {
     results_df <- G_comp_model_results |>
       mutate(p.value = format.pval(p.value, digits = 3, eps = 0.001))
 
@@ -630,29 +646,32 @@ tar_target(
         )
       )
   }
+
 ),
 
 # DHARMa diagnostics
 tar_target(
-  G_comp_dharma,
-  {
+  name = G_comp_dharma,
+  command = {
     set.seed(123)
     DHARMa::simulateResiduals(
       fittedModel = mod_G_comp,
       n = 1000
     )
   }
+
 ),
 
 tar_target(
-  G_comp_dharma_plot,
-  plot(G_comp_dharma)
+  name = G_comp_dharma_plot,
+  command = plot(G_comp_dharma)
+
 ),
 
 # Contrasts at mean climate
 tar_target(
-  G_comp_emm_mean_climate,
-  emmeans::emmeans(
+  name = G_comp_emm_mean_climate,
+  command = emmeans::emmeans(
     mod_G_comp,
     ~ F_treat * B_treat,
     at = list(
@@ -660,11 +679,12 @@ tar_target(
       precipitation_scaled = 2.21
     )
   )
+
 ),
 
 tar_target(
-  G_comp_contrasts_mean_climate,
-  emmeans::contrast(
+  name = G_comp_contrasts_mean_climate,
+  command = emmeans::contrast(
     G_comp_emm_mean_climate,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -672,11 +692,12 @@ tar_target(
   ) |>
     summary(type = "response", infer = c(TRUE, TRUE)) |>
     as.data.frame()
+
 ),
 
 tar_target(
-  G_comp_contrasts_mean_climate_table,
-  G_comp_contrasts_mean_climate |>
+  name = G_comp_contrasts_mean_climate_table,
+  command = G_comp_contrasts_mean_climate |>
     mutate(
       ratio = round(ratio, 2),
       asymp.LCL = round(asymp.LCL, 2),
@@ -694,12 +715,13 @@ tar_target(
       ratio = "Biomass ratio",
       p.value = gt::md("Adjusted *p*-value")
     )
+
 ),
 
 # Temperature-dependent contrasts; precipitation fixed at mean
 tar_target(
-  G_comp_emm_temperature,
-  emmeans::emmeans(
+  name = G_comp_emm_temperature,
+  command = emmeans::emmeans(
     mod_G_comp,
     ~ F_treat * B_treat | temperature_scaled,
     at = list(
@@ -707,11 +729,12 @@ tar_target(
       precipitation_scaled = 2.21
     )
   )
+
 ),
 
 tar_target(
-  G_comp_contrasts_temperature,
-  emmeans::contrast(
+  name = G_comp_contrasts_temperature,
+  command = emmeans::contrast(
     G_comp_emm_temperature,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -719,14 +742,15 @@ tar_target(
   ) |>
     summary(type = "response", infer = c(TRUE, TRUE)) |>
     as.data.frame()
+
 ),
 
 
 
 # Precipitation-dependent contrasts; temperature fixed at mean
 tar_target(
-  G_comp_emm_precipitation,
-  emmeans::emmeans(
+  name = G_comp_emm_precipitation,
+  command = emmeans::emmeans(
     mod_G_comp,
     ~ F_treat * B_treat | precipitation_scaled,
     at = list(
@@ -734,11 +758,12 @@ tar_target(
       temperature_scaled = 1.05
     )
   )
+
 ),
 
 tar_target(
-  G_comp_contrasts_precipitation,
-  emmeans::contrast(
+  name = G_comp_contrasts_precipitation,
+  command = emmeans::contrast(
     G_comp_emm_precipitation,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -746,6 +771,7 @@ tar_target(
   ) |>
     summary(type = "response", infer = c(TRUE, TRUE)) |>
     as.data.frame()
+
 ),
 
 
