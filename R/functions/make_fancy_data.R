@@ -51,6 +51,47 @@ make_fancy_data <- function(data, gridded_climate, fix_treatment = TRUE){
 
 
 
+#' Clean compensation-model term names for tables/figures
+#' @param tidy_df A tidy model output with a `term` column
+#' @return The same data frame with shortened term labels
+#'   (G_treat/F_treat/B_treat → G/F/B; temperature_scaled → T; precipitation_scaled → P)
+clean_comp_model_terms <- function(tidy_df) {
+  tidy_df |>
+    dplyr::mutate(
+      term = term |>
+        stringr::str_replace_all("G_treat", "G") |>
+        stringr::str_replace_all("F_treat", "F") |>
+        stringr::str_replace_all("B_treat", "B") |>
+        stringr::str_replace_all("temperature_scaled", "T") |>
+        stringr::str_replace_all("precipitation_scaled", "P")
+    )
+}
+
+#' Turn emmeans trt.vs.ctrl contrast labels into readable removal names
+#' @param contrast Character/factor vector of contrasts like
+#'   "G_treat1 F_treat0 B_treat0 / G_treat0 F_treat0 B_treat0"
+#' @return Character vector, e.g. "Graminoids", "Graminoids + forbs"
+#'   (always relative to none removed)
+clean_comp_contrast_labels <- function(contrast) {
+  left <- stringr::str_split_fixed(as.character(contrast), " / ", n = 2)[, 1]
+
+  purrr::map_chr(left, function(x) {
+    removed <- c(
+      G = stringr::str_detect(x, "G_treat1"),
+      F = stringr::str_detect(x, "F_treat1"),
+      B = stringr::str_detect(x, "B_treat1")
+    )
+    names_removed <- c(G = "Graminoids", F = "Forbs", B = "Bryophytes")[removed]
+
+    if (length(names_removed) == 0) {
+      "None"
+    } else {
+      paste(names_removed, collapse = " + ")
+    }
+  })
+}
+
+
 #rename traits to fancy names for figures
 
 fancy_trait_name_dictionary <- function(dat){
