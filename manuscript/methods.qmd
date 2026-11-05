@@ -5,7 +5,7 @@ editor: visual
 ```{r}
 #| label: set-up-methods
 #| echo: false
-#| messages: false
+#| message: false
 library(targets)
 library(tarchetypes)
 library(gt)
