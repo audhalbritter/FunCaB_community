@@ -155,7 +155,7 @@ tar_target(
   # ------------------------------------------------------------
   tar_target(
     name = B_comp_dat,
-    command = standing_biomass_22_wide |>
+    command = standing_biomass_22_cover_15 |>
       filter(B_treat == 0, B > 0)
   ),
 
@@ -375,8 +375,8 @@ tar_target(
 # ============================================================
 
 tar_target(
-  name = F_comp_dat,
-  command = standing_biomass_22_wide |>
+  F_comp_dat,
+  standing_biomass_22_cover_15 |>
     filter(F_treat == 0, F > 0)
 
 ),
@@ -578,8 +578,8 @@ tar_target(
 # ============================================================
 
 tar_target(
-  name = G_comp_dat,
-  command = standing_biomass_22_wide |>
+  G_comp_dat,
+  standing_biomass_22_cover_15 |>
     filter(G_treat == 0, G > 0)
 
 ),
@@ -774,6 +774,564 @@ tar_target(
 
 ),
 
+
+
+
+
+
+# PART 3: Single group effects with absolute biomass values
+
+# ------------------------------------------------------------
+# Full bryophyte compensation model
+# ------------------------------------------------------------
+tar_target(
+  name = mod_B_comp_abs,
+  command = glmmTMB(
+    B ~
+      G_treat * F_treat +
+      temperature_scaled * precipitation_scaled +
+      G_cover + F_cover + B_cover +
+
+      # Do removal effects vary with climate?
+      (G_treat + F_treat):(temperature_scaled + precipitation_scaled) +
+
+      # Do removal effects vary with initial group quantities?
+      (G_treat + F_treat):(G_cover + F_cover + B_cover) +
+      (1 | siteID/blockID),
+    family = Gamma(link = "log"),
+    data = B_comp_dat
+  )
+),
+
+# ------------------------------------------------------------
+# Full-model coefficient table
+# ------------------------------------------------------------
+tar_target(
+  name = B_comp_abs_model_results,
+  command = broom.mixed::tidy(
+    mod_B_comp_abs,
+    effects = "fixed",
+    conf.int = TRUE
+  ) |>
+    mutate(
+      estimate = round(estimate, 3),
+      std.error = round(std.error, 3),
+      conf.low = round(conf.low, 3),
+      conf.high = round(conf.high, 3),
+      p.value = case_when(
+        p.value < 0.001 ~ "<0.001",
+        TRUE ~ format(round(p.value, 3), nsmall = 3)
+      )
+    )
+),
+
+tar_target(
+  name = B_comp_abs_model_results_table,
+  command = B_comp_abs_model_results |>
+    gt() |>
+    cols_label(
+      term = "Model term",
+      estimate = "Estimate",
+      std.error = "SE",
+      conf.low = "Lower 95% CI",
+      conf.high = "Upper 95% CI",
+      p.value = md("*p*-value")
+    )
+),
+
+# ------------------------------------------------------------
+# DHARMa diagnostics
+# ------------------------------------------------------------
+tar_target(
+  name = B_comp_abs_dharma,
+  command = {
+    set.seed(123)
+    simulateResiduals(
+      fittedModel = mod_B_comp_abs,
+      n = 1000
+    )
+  }
+),
+
+# This target returns the diagnostic plot
+tar_target(
+  name = B_comp_abs_dharma_plot,
+  command = plot(B_comp_abs_dharma)
+),
+
+# ------------------------------------------------------------
+# Contrasts at mean temperature and mean precipitation
+# ------------------------------------------------------------
+tar_target(
+  name = B_comp_abs_emm_mean_climate,
+  command = emmeans(
+    mod_B_comp_abs,
+    ~ G_treat * F_treat,
+    at = list(
+      temperature_scaled = 1.05,
+      precipitation_scaled = 2.21
+    )
+  )
+),
+
+tar_target(
+  name = B_comp_abs_contrasts_mean_climate,
+  command = contrast(
+    B_comp_abs_emm_mean_climate,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(
+      type = "response",
+      infer = c(TRUE, TRUE)
+    ) |>
+    as.data.frame()
+),
+
+tar_target(
+  name = B_comp_abs_contrasts_mean_climate_table,
+  command = B_comp_abs_contrasts_mean_climate |>
+    mutate(
+      ratio = round(ratio, 2),
+      asymp.LCL = round(asymp.LCL, 2),
+      asymp.UCL = round(asymp.UCL, 2),
+      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
+      p.value = case_when(
+        p.value < 0.001 ~ "<0.001",
+        TRUE ~ format(round(p.value, 3), nsmall = 3)
+      )
+    ) |>
+    select(contrast, ratio, `95% CI`, p.value) |>
+    gt() |>
+    cols_label(
+      contrast = "Contrast",
+      ratio = "Biomass ratio",
+      p.value = md("Adjusted *p*-value")
+    )
+),
+
+# ------------------------------------------------------------
+# Temperature-dependent contrasts
+# Precipitation held at its mean
+# ------------------------------------------------------------
+tar_target(
+  name = B_comp_abs_emm_temperature,
+  command = emmeans(
+    mod_B_comp_abs,
+    ~ G_treat * F_treat | temperature_scaled,
+    at = list(
+      temperature_scaled = c(
+        1.05 - 0.22,
+        1.05,
+        1.05 + 0.22
+      ),
+      precipitation_scaled = 2.21
+    )
+  )
+),
+
+tar_target(
+  name = B_comp_abs_contrasts_temperature,
+  command = contrast(
+    B_comp_abs_emm_temperature,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(
+      type = "response",
+      infer = c(TRUE, TRUE)
+    ) |>
+    as.data.frame()
+),
+
+
+
+# ------------------------------------------------------------
+# Precipitation-dependent contrasts
+# Temperature held at its mean
+# ------------------------------------------------------------
+tar_target(
+  name = B_comp_abs_emm_precipitation,
+  command = emmeans(
+    mod_B_comp_abs,
+    ~ G_treat * F_treat | precipitation_scaled,
+    at = list(
+      precipitation_scaled = c(0.87, 2.22, 4.65),
+      temperature_scaled = 1.05
+    )
+  )
+),
+
+tar_target(
+  name = B_comp_abs_contrasts_precipitation,
+  command = contrast(
+    B_comp_abs_emm_precipitation,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(
+      type = "response",
+      infer = c(TRUE, TRUE)
+    ) |>
+    as.data.frame()
+),
+
+
+
+
+# ============================================================
+# F FUNCTIONAL-GROUP COMPENSATION MODEL
+# F retained; effects of G and B removal
+# ============================================================
+
+
+tar_target(
+  name = mod_F_comp_abs,
+  command = glmmTMB(
+    F ~
+      G_treat * B_treat +
+      temperature_scaled * precipitation_scaled +
+      G_cover + B_cover + B_cover +
+
+      # Do removal effects vary with climate?
+      (G_treat + B_treat):(temperature_scaled + precipitation_scaled) +
+
+      # Do removal effects vary with initial group quantities?
+      (G_treat + B_treat):(G_cover + F_cover + B_cover) +
+      (1 | siteID/blockID),
+    family = Gamma(link = "log"),
+    data = F_comp_dat
+  )
+),
+
+# Fixed-effect coefficient output
+tar_target(
+  name = F_comp_abs_model_results,
+  command = broom.mixed::tidy(
+    mod_F_comp_abs,
+    effects = "fixed",
+    conf.int = TRUE
+  )
+),
+
+tar_target(
+  name =F_comp_abs_model_results_table,
+  command = F_comp_abs_model_results |>
+    mutate(
+      estimate = round(estimate, 3),
+      std.error = round(std.error, 3),
+      conf.low = round(conf.low, 3),
+      conf.high = round(conf.high, 3),
+      p.value = case_when(
+        p.value < 0.001 ~ "<0.001",
+        TRUE ~ format(round(p.value, 3), nsmall = 3)
+      )
+    ) |>
+    gt::gt() |>
+    gt::cols_label(
+      term = "Model term",
+      estimate = "Estimate",
+      std.error = "SE",
+      conf.low = "Lower 95% CI",
+      conf.high = "Upper 95% CI",
+      p.value = gt::md("*p*-value")
+    )
+),
+
+# DHARMa diagnostics
+tar_target(
+  name = F_comp_abs_dharma,
+  command = {
+    set.seed(123)
+    DHARMa::simulateResiduals(
+      fittedModel = mod_F_comp_abs,
+      n = 1000
+    )
+  }
+),
+
+tar_target(
+  name = F_comp_abs_dharma_plot,
+  command = plot(F_comp_abs_dharma)
+),
+
+# Contrasts at mean climate
+tar_target(
+  name = F_comp_abs_emm_mean_climate,
+  command = emmeans::emmeans(
+    mod_F_comp_abs,
+    ~ G_treat * B_treat,
+    at = list(
+      temperature_scaled = 1.05,
+      precipitation_scaled = 2.21
+    )
+  )
+),
+
+tar_target(
+  name = F_comp_abs_contrasts_mean_climate,
+  command = emmeans::contrast(
+    F_comp_abs_emm_mean_climate,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(type = "response", infer = c(TRUE, TRUE)) |>
+    as.data.frame()
+),
+
+tar_target(
+  name = F_comp_abs_contrasts_mean_climate_table,
+  command = F_comp_abs_contrasts_mean_climate |>
+    mutate(
+      ratio = round(ratio, 2),
+      asymp.LCL = round(asymp.LCL, 2),
+      asymp.UCL = round(asymp.UCL, 2),
+      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
+      p.value = case_when(
+        p.value < 0.001 ~ "<0.001",
+        TRUE ~ format(round(p.value, 3), nsmall = 3)
+      )
+    ) |>
+    select(contrast, ratio, `95% CI`, p.value) |>
+    gt::gt() |>
+    gt::cols_label(
+      contrast = "Contrast",
+      ratio = "Biomass ratio",
+      p.value = gt::md("Adjusted *p*-value")
+    )
+),
+
+# Temperature-dependent contrasts; precipitation fixed at mean
+tar_target(
+  name = F_comp_abs_emm_temperature,
+  command = emmeans::emmeans(
+    mod_F_comp_abs,
+    ~ G_treat * B_treat | temperature_scaled,
+    at = list(
+      temperature_scaled = c(1.05 - 0.22, 1.05, 1.05 + 0.22),
+      precipitation_scaled = 2.21
+    )
+  )
+),
+
+tar_target(
+  name = F_comp_abs_contrasts_temperature,
+  command = emmeans::contrast(
+    F_comp_abs_emm_temperature,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(type = "response", infer = c(TRUE, TRUE)) |>
+    as.data.frame()
+),
+
+
+# Precipitation-dependent contrasts; temperature fixed at mean
+tar_target(
+  name = F_comp_abs_emm_precipitation,
+  command = emmeans::emmeans(
+    mod_F_comp_abs,
+    ~ G_treat * B_treat | precipitation_scaled,
+    at = list(
+      precipitation_scaled = c(0.87, 2.22, 4.65),
+      temperature_scaled = 1.05
+    )
+  )
+),
+
+tar_target(
+  name = F_comp_abs_contrasts_precipitation,
+  command = emmeans::contrast(
+    F_comp_abs_emm_precipitation,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(type = "response", infer = c(TRUE, TRUE)) |>
+    as.data.frame()
+),
+
+
+
+# ============================================================
+# G FUNCTIONAL-GROUP COMPENSATION MODEL
+# G retained; effects of F and B removal
+# ============================================================
+
+
+tar_target(
+  name = mod_G_comp_abs,
+  command = glmmTMB(
+    G ~
+      F_treat * B_treat +
+      temperature_scaled * precipitation_scaled +
+      G_cover + B_cover + B_cover +
+
+      # Do removal effects vary with climate?
+      (B_treat + F_treat):(temperature_scaled + precipitation_scaled) +
+
+      # Do removal effects vary with initial group quantities?
+      (F_treat + B_treat):(G_cover + F_cover + B_cover) +
+      (1 | siteID/blockID),
+    family = Gamma(link = "log"),
+    data = G_comp_dat
+  )
+),
+
+# Fixed-effect coefficient output
+tar_target(
+  name = G_comp_abs_model_results,
+  command = broom.mixed::tidy(
+    mod_G_comp_abs,
+    effects = "fixed",
+    conf.int = TRUE
+  )
+),
+
+tar_target(
+  name = G_comp_abs_model_results_table,
+  command = G_comp_abs_model_results |>
+    mutate(
+      estimate = round(estimate, 3),
+      std.error = round(std.error, 3),
+      conf.low = round(conf.low, 3),
+      conf.high = round(conf.high, 3),
+      p.value = case_when(
+        p.value < 0.001 ~ "<0.001",
+        TRUE ~ format(round(p.value, 3), nsmall = 3)
+      )
+    ) |>
+    gt::gt() |>
+    gt::cols_label(
+      term = "Model term",
+      estimate = "Estimate",
+      std.error = "SE",
+      conf.low = "Lower 95% CI",
+      conf.high = "Upper 95% CI",
+      p.value = gt::md("*p*-value")
+    )
+),
+
+# DHARMa diagnostics
+tar_target(
+  name = G_comp_abs_dharma,
+  command = {
+    set.seed(123)
+    DHARMa::simulateResiduals(
+      fittedModel = mod_G_comp_abs,
+      n = 1000
+    )
+  }
+),
+
+tar_target(
+  name = G_comp_abs_dharma_plot,
+  command = plot(G_comp_abs_dharma)
+),
+
+# Contrasts at mean climate
+tar_target(
+  name = G_comp_abs_emm_mean_climate,
+  command = emmeans::emmeans(
+    mod_G_comp_abs,
+    ~ F_treat * B_treat,
+    at = list(
+      temperature_scaled = 1.05,
+      precipitation_scaled = 2.21
+    )
+  )
+),
+
+tar_target(
+  name = G_comp_abs_contrasts_mean_climate,
+  command = emmeans::contrast(
+    G_comp_abs_emm_mean_climate,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(type = "response", infer = c(TRUE, TRUE)) |>
+    as.data.frame()
+),
+
+tar_target(
+  name = G_comp_abs_contrasts_mean_climate_table,
+  command = G_comp_abs_contrasts_mean_climate |>
+    mutate(
+      ratio = round(ratio, 2),
+      asymp.LCL = round(asymp.LCL, 2),
+      asymp.UCL = round(asymp.UCL, 2),
+      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
+      p.value = case_when(
+        p.value < 0.001 ~ "<0.001",
+        TRUE ~ format(round(p.value, 3), nsmall = 3)
+      )
+    ) |>
+    select(contrast, ratio, `95% CI`, p.value) |>
+    gt::gt() |>
+    gt::cols_label(
+      contrast = "Contrast",
+      ratio = "Biomass ratio",
+      p.value = gt::md("Adjusted *p*-value")
+    )
+),
+
+# Temperature-dependent contrasts; precipitation fixed at mean
+tar_target(
+  name = G_comp_abs_emm_temperature,
+  command = emmeans::emmeans(
+    mod_G_comp_abs,
+    ~ F_treat * B_treat | temperature_scaled,
+    at = list(
+      temperature_scaled = c(1.05 - 0.22, 1.05, 1.05 + 0.22),
+      precipitation_scaled = 2.21
+    )
+  )
+),
+
+tar_target(
+  name = G_comp_abs_contrasts_temperature,
+  command = emmeans::contrast(
+    G_comp_abs_emm_temperature,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(type = "response", infer = c(TRUE, TRUE)) |>
+    as.data.frame()
+),
+
+
+
+# Precipitation-dependent contrasts; temperature fixed at mean
+tar_target(
+  name = G_comp_abs_emm_precipitation,
+  command = emmeans::emmeans(
+    mod_G_comp_abs,
+    ~ F_treat * B_treat | precipitation_scaled,
+    at = list(
+      precipitation_scaled = c(0.87, 2.22, 4.65),
+      temperature_scaled = 1.05
+    )
+  )
+),
+
+tar_target(
+  name = G_comp_abs_contrasts_precipitation,
+  command = emmeans::contrast(
+    G_comp_abs_emm_precipitation,
+    method = "trt.vs.ctrl",
+    ref = 1,
+    adjust = "holm"
+  ) |>
+    summary(type = "response", infer = c(TRUE, TRUE)) |>
+    as.data.frame()
+),
 
 
 
