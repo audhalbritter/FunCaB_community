@@ -116,6 +116,13 @@ total_comp_model_results |>
     locations = cells_body(
       rows = total_comp_model_results$p.value < 0.05
     )
+  ) |>
+  tab_style(
+    style = cell_text(style = "italic"),
+    locations = cells_body(
+      rows = total_comp_model_results$p.value >= 0.05 &
+        total_comp_model_results$p.value <= 0.07
+    )
   )
 ```
 
@@ -134,10 +141,10 @@ total_comp_contrasts_mean_climate_table
 
 ### PART 2: Focal functional group effects
 
-#### Bryophytes removed
+#### Bryophytes present
 
 ```{r}
-#| label: results-bryophyte-biomass-model
+#| label: tbl-results-bryophyte-biomass-model
 #| echo: false
 #| warning: false
 #| message: false
@@ -145,40 +152,33 @@ total_comp_contrasts_mean_climate_table
 # load in results
 tar_load(B_comp_model_results_table)
 
-
 B_comp_model_results_table
 ```
 
 ```{r}
-#| label: results-bryophyte-precipitation-biomass-figure
+#| label: fig-results-bryophyte-precipitation-biomass
 #| echo: false
 #| warning: false
 #| message: false
 
-# load in results
-tar_load(fig_B_comp_precipitation_contrast)
-
-
-fig_B_comp_precipitation_contrast
+# print in results
+tar_read(fig_B_comp_precipitation_contrast)
 ```
 
 ```{r}
-#| label: results-bryophyte-biomass-temperature-figure
+#| label: fig-results-bryophyte-biomass-temperature
 #| echo: false
 #| warning: false
 #| message: false
 
-# load in results
-tar_load(fig_B_comp_temperature_contrast)
-
-
-fig_B_comp_temperature_contrast
+# print in results
+tar_read(fig_B_comp_temperature_contrast)
 ```
 
-#### Graminoids
+#### Graminoids present
 
 ```{r}
-#| label: results-graminoid-biomass-model
+#| label: tbl-results-graminoid-biomass-model
 #| echo: false
 #| warning: false
 #| message: false
@@ -186,40 +186,33 @@ fig_B_comp_temperature_contrast
 # load in results
 tar_load(G_comp_model_results_table)
 
-
 G_comp_model_results_table
 ```
 
 ```{r}
-#| label: results-graminoid-precipitation-biomass-figure
+#| label: fig-results-graminoid-precipitation-biomass
 #| echo: false
 #| warning: false
 #| message: false
 
-# load in results
-tar_load(fig_G_comp_precipitation_contrast)
-
-
-fig_G_comp_precipitation_contrast
+# print in results
+tar_read(fig_G_comp_precipitation_contrast)
 ```
 
 ```{r}
-#| label: results-graminoid-biomass-temperature-figure
+#| label: fig-results-graminoid-biomass-temperature
 #| echo: false
 #| warning: false
 #| message: false
 
-# load in results
-tar_load(fig_G_comp_temperature_contrast)
-
-
-fig_G_comp_temperature_contrast
+# print in results
+tar_read(fig_G_comp_temperature_contrast)
 ```
 
-#### Forbs
+#### Forbs present
 
 ```{r}
-#| label: results-forb-biomass-model
+#| label: tbl-results-forb-biomass-model
 #| echo: false
 #| warning: false
 #| message: false
@@ -227,34 +220,27 @@ fig_G_comp_temperature_contrast
 # load in results
 tar_load(F_comp_model_results_table)
 
-
 F_comp_model_results_table
 ```
 
 ```{r}
-#| label: results-forb-precipitation-biomass-figure
+#| label: fig-results-forb-precipitation-biomass
 #| echo: false
 #| warning: false
 #| message: false
 
-# load in results
-tar_load(fig_F_comp_precipitation_contrast)
-
-
-fig_F_comp_precipitation_contrast
+# print in results
+tar_read(fig_F_comp_precipitation_contrast)
 ```
 
 ```{r}
-#| label: results-forb-biomass-temperature-figure
+#| label: fig-results-forb-biomass-temperature
 #| echo: false
 #| warning: false
 #| message: false
 
-# load in results
-tar_load(fig_F_comp_temperature_contrast)
-
-
-fig_F_comp_temperature_contrast
+# print in results
+tar_read(fig_F_comp_temperature_contrast)
 ```
 
 ### Functional group richness effect
@@ -266,15 +252,12 @@ fig_F_comp_temperature_contrast
 #| warning: false
 #| message: false
 
-# Load the figure from targets
-tar_load(fig_fg_richness_focal_effects)
-
-# Display plot
-fig_fg_richness_focal_effects
+# print the figure from targets
+tar_read(fig_fg_richness_focal_effects)
 ```
 
 ```{r}
-#| label: fg-richness-focal-tidy-table
+#| label: tbl-fg-richness-focal-tidy
 #| echo: false
 #| warning: false
 #| message: false
@@ -295,14 +278,11 @@ pretty_model_table(fg_richness_focal_tidy, group_var = "focal_fg")
 #| message: false
 
 # Load the figure from targets
-tar_load(fig_fg_identity_focal_effects)
-
-# Display plot
-fig_fg_identity_focal_effects
+tar_print(fig_fg_identity_focal_effects)
 ```
 
 ```{r}
-#| label: fg-identity-focal-tidy-table
+#| label: tbl-fg-identity-focal-tidy
 #| echo: false
 #| warning: false
 #| message: false

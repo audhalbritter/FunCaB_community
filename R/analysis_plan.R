@@ -185,30 +185,45 @@ tar_target(
       effects = "fixed",
       conf.int = TRUE
     ) |>
+      clean_comp_model_terms() |>
       mutate(
         estimate = round(estimate, 3),
         std.error = round(std.error, 3),
         conf.low = round(conf.low, 3),
         conf.high = round(conf.high, 3),
-        p.value = case_when(
-          p.value < 0.001 ~ "<0.001",
-          TRUE ~ format(round(p.value, 3), nsmall = 3)
-        )
-      )
+        p.value = round(p.value, 3)
+      ) |>
+      select(-effect, -component)
   ),
 
   tar_target(
     name = B_comp_model_results_table,
-    command = B_comp_model_results |>
-      gt() |>
-      cols_label(
-        term = "Model term",
-        estimate = "Estimate",
-        std.error = "SE",
-        conf.low = "Lower 95% CI",
-        conf.high = "Upper 95% CI",
-        p.value = md("*p*-value")
-      )
+    command = {
+      results_df <- B_comp_model_results |>
+        mutate(p.value = format.pval(p.value, digits = 3, eps = 0.001))
+
+      results_df |>
+        gt() |>
+        cols_label(
+          term = "Model term",
+          estimate = "Estimate",
+          std.error = "SE",
+          conf.low = "Lower 95% CI",
+          conf.high = "Upper 95% CI",
+          p.value = md("*p*-value")
+        ) |>
+        tab_style(
+          style = cell_text(weight = "bold"),
+          locations = cells_body(rows = B_comp_model_results$p.value < 0.05)
+        ) |>
+        tab_style(
+          style = cell_text(style = "italic"),
+          locations = cells_body(
+            rows = B_comp_model_results$p.value >= 0.05 &
+              B_comp_model_results$p.value <= 0.07
+          )
+        )
+    }
   ),
 
   # ------------------------------------------------------------
@@ -385,31 +400,46 @@ tar_target(
     mod_F_comp,
     effects = "fixed",
     conf.int = TRUE
-  )
-),
-
-tar_target(
-  F_comp_model_results_table,
-  F_comp_model_results |>
+  ) |>
+    clean_comp_model_terms() |>
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
-      p.value = case_when(
-        p.value < 0.001 ~ "<0.001",
-        TRUE ~ format(round(p.value, 3), nsmall = 3)
-      )
+      p.value = round(p.value, 3)
     ) |>
-    gt::gt() |>
-    gt::cols_label(
-      term = "Model term",
-      estimate = "Estimate",
-      std.error = "SE",
-      conf.low = "Lower 95% CI",
-      conf.high = "Upper 95% CI",
-      p.value = gt::md("*p*-value")
-    )
+    select(-effect, -component)
+),
+
+tar_target(
+  F_comp_model_results_table,
+  {
+    results_df <- F_comp_model_results |>
+      mutate(p.value = format.pval(p.value, digits = 3, eps = 0.001))
+
+    results_df |>
+      gt() |>
+      cols_label(
+        term = "Model term",
+        estimate = "Estimate",
+        std.error = "SE",
+        conf.low = "Lower 95% CI",
+        conf.high = "Upper 95% CI",
+        p.value = md("*p*-value")
+      ) |>
+      tab_style(
+        style = cell_text(weight = "bold"),
+        locations = cells_body(rows = F_comp_model_results$p.value < 0.05)
+      ) |>
+      tab_style(
+        style = cell_text(style = "italic"),
+        locations = cells_body(
+          rows = F_comp_model_results$p.value >= 0.05 &
+            F_comp_model_results$p.value <= 0.07
+        )
+      )
+  }
 ),
 
 # DHARMa diagnostics
@@ -560,31 +590,46 @@ tar_target(
     mod_G_comp,
     effects = "fixed",
     conf.int = TRUE
-  )
-),
-
-tar_target(
-  G_comp_model_results_table,
-  G_comp_model_results |>
+  ) |>
+    clean_comp_model_terms() |>
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
-      p.value = case_when(
-        p.value < 0.001 ~ "<0.001",
-        TRUE ~ format(round(p.value, 3), nsmall = 3)
-      )
+      p.value = round(p.value, 3)
     ) |>
-    gt::gt() |>
-    gt::cols_label(
-      term = "Model term",
-      estimate = "Estimate",
-      std.error = "SE",
-      conf.low = "Lower 95% CI",
-      conf.high = "Upper 95% CI",
-      p.value = gt::md("*p*-value")
-    )
+    select(-effect, -component)
+),
+
+tar_target(
+  G_comp_model_results_table,
+  {
+    results_df <- G_comp_model_results |>
+      mutate(p.value = format.pval(p.value, digits = 3, eps = 0.001))
+
+    results_df |>
+      gt() |>
+      cols_label(
+        term = "Model term",
+        estimate = "Estimate",
+        std.error = "SE",
+        conf.low = "Lower 95% CI",
+        conf.high = "Upper 95% CI",
+        p.value = md("*p*-value")
+      ) |>
+      tab_style(
+        style = cell_text(weight = "bold"),
+        locations = cells_body(rows = G_comp_model_results$p.value < 0.05)
+      ) |>
+      tab_style(
+        style = cell_text(style = "italic"),
+        locations = cells_body(
+          rows = G_comp_model_results$p.value >= 0.05 &
+            G_comp_model_results$p.value <= 0.07
+        )
+      )
+  }
 ),
 
 # DHARMa diagnostics
