@@ -104,9 +104,10 @@ tar_load(fig_total_biomass_treatment_temperature)
 fig_total_biomass_treatment_temperature
 ```
 
-
 ### Part 2: Focal functional group effects
+
 #### Bryophytes
+
 ```{r}
 #| label: results-bryophyte-biomass-model
 #| echo: false
@@ -146,8 +147,8 @@ tar_load(fig_B_comp_temperature_contrast)
 fig_B_comp_temperature_contrast
 ```
 
-
 #### Graminoids
+
 ```{r}
 #| label: results-graminoid-biomass-model
 #| echo: false
@@ -188,6 +189,7 @@ fig_G_comp_temperature_contrast
 ```
 
 #### Forbs
+
 ```{r}
 #| label: results-forb-biomass-model
 #| echo: false
@@ -227,7 +229,53 @@ tar_load(fig_F_comp_temperature_contrast)
 fig_F_comp_temperature_contrast
 ```
 
+### Functional group singular analyses, taking initial *cover* values into account
 
+#### Forbs
+
+```{r}
+#| label: results-forb-biomass-absolute-model
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in results
+tar_load(F_comp_abs_model_results_table)
+
+
+F_comp_abs_model_results_table
+
+```
+
+#### Graminoids
+
+```{r}
+#| label: results-graminoid-biomass-absolute-model
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in results
+tar_load(G_comp_abs_model_results_table)
+
+
+G_comp_abs_model_results_table
+```
+
+#### Bryophytes
+
+```{r}
+#| label: results-bryophyte-biomass-absolute-model
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in results
+tar_load(B_comp_abs_model_results_table)
+
+
+B_comp_abs_model_results_table
+```
 
 ### Functional group richness effect
 
