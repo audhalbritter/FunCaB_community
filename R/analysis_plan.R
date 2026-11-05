@@ -835,7 +835,7 @@ tar_target(
   name = B_comp_abs_emm_mean_climate,
   command = emmeans(
     mod_B_comp_abs,
-    ~ G * F_treat,
+    ~ G_treat * F_treat,
     at = list(
       temperature_scaled = 1.05,
       precipitation_scaled = 2.21
@@ -888,7 +888,7 @@ tar_target(
   name = B_comp_abs_emm_temperature,
   command = emmeans(
     mod_B_comp_abs,
-    ~ G * F | temperature_scaled,
+    ~ G_treat * F_treat | temperature_scaled,
     at = list(
       temperature_scaled = c(
         1.05 - 0.22,
@@ -925,7 +925,7 @@ tar_target(
   name = B_comp_abs_emm_precipitation,
   command = emmeans(
     mod_B_comp_abs,
-    ~ G * F | precipitation_scaled,
+    ~ G_treat * F_treat | precipitation_scaled,
     at = list(
       precipitation_scaled = c(0.87, 2.22, 4.65),
       temperature_scaled = 1.05
@@ -1032,7 +1032,7 @@ tar_target(
   name = F_comp_abs_emm_mean_climate,
   command = emmeans::emmeans(
     mod_F_comp_abs,
-    ~ G * B,
+    ~ G_treat * B_treat,
     at = list(
       temperature_scaled = 1.05,
       precipitation_scaled = 2.21
@@ -1079,7 +1079,7 @@ tar_target(
   name = F_comp_abs_emm_temperature,
   command = emmeans::emmeans(
     mod_F_comp_abs,
-    ~ G * B | temperature_scaled,
+    ~ G_treat * B_treat | temperature_scaled,
     at = list(
       temperature_scaled = c(1.05 - 0.22, 1.05, 1.05 + 0.22),
       precipitation_scaled = 2.21
@@ -1105,7 +1105,7 @@ tar_target(
   name = F_comp_abs_emm_precipitation,
   command = emmeans::emmeans(
     mod_F_comp_abs,
-    ~ G * B | precipitation_scaled,
+    ~ G_treat * B_treat | precipitation_scaled,
     at = list(
       precipitation_scaled = c(0.87, 2.22, 4.65),
       temperature_scaled = 1.05
@@ -1208,7 +1208,7 @@ tar_target(
   name = G_comp_abs_emm_mean_climate,
   command = emmeans::emmeans(
     mod_G_comp_abs,
-    ~ F * B,
+    ~ F_treat * B_treat,
     at = list(
       temperature_scaled = 1.05,
       precipitation_scaled = 2.21
@@ -1255,7 +1255,7 @@ tar_target(
   name = G_comp_abs_emm_temperature,
   command = emmeans::emmeans(
     mod_G_comp_abs,
-    ~ F * B | temperature_scaled,
+    ~ F_treat * B_treat | temperature_scaled,
     at = list(
       temperature_scaled = c(1.05 - 0.22, 1.05, 1.05 + 0.22),
       precipitation_scaled = 2.21
@@ -1282,7 +1282,7 @@ tar_target(
   name = G_comp_abs_emm_precipitation,
   command = emmeans::emmeans(
     mod_G_comp_abs,
-    ~ F * B | precipitation_scaled,
+    ~ F_treat * B_treat | precipitation_scaled,
     at = list(
       precipitation_scaled = c(0.87, 2.22, 4.65),
       temperature_scaled = 1.05
