@@ -18,16 +18,25 @@ manuscript_plan <- list(
   #   format = "file"
   # ),
 
-  # render manuscript
-  # tar_render(name = ms,
-  #            path = "Manuscript/Manuscript.Rmd")
-
-  # Results
-  tar_render(
-    name = manuscript,
-    path = "manuscript/main_manuscript.qmd"
+  # Manuscript
+  tar_quarto(
+  name = manuscript,
+  path = "manuscript/main_manuscript.qmd",
+  extra_files = c(
+    "manuscript/introduction.qmd",
+    "manuscript/methods.qmd",
+    "manuscript/results.qmd",
+    "manuscript/discussion.qmd"
   )
-  # tar_render(
+),
+
+  # Supporting information
+  tar_quarto(
+    name = si,
+    path = "manuscript/supporting_information.qmd"
+  )
+
+  # tar_quarto(
   #   name = si,
   #   path = "manuscript/si_model_assumption_checking.qmd"
   # )

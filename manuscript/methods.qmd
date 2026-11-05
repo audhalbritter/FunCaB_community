@@ -5,8 +5,11 @@ editor: visual
 ```{r}
 #| label: set-up-methods
 #| echo: false
+#| message: false
 library(targets)
 library(tarchetypes)
+library(gt)
+library(tidyverse)
 
 ```
 
@@ -22,6 +25,8 @@ To assess the effects of plant functional group removals on standing biomass and
 
 The removals were done annually at peak growing season between 2015 and 2022. In 2016 and 2017, the removals were done twice, including a removal in the spring. The above ground biomass of the relevant plant functional group(s) were removed. The below ground biomass, litter and lichens were left intact.
 
+![Experimental design. A) Location or study sites and showing the sites within the climate grid (temperature and precipitation gradients). B) Removal treatments and data collection for plant species composition. C) Timeline showing the functional group removal and data collection on vascular plant composition. (Panel C needs to be reduced to 2 first lines!).](exp_design.png)
+
 ### Data Collection
 
 #### Above ground biomass (removed and remaining)
@@ -36,93 +41,68 @@ Plant community composition recorded annually between 2015 and 2019 across all e
 
 ### Data preparation
 
-**Biomass standardisation:** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
+**Biomass standardization (not used!):** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
 
 ### Analysis
 
--   Calculate cumulative removed biomass per treatment and functional group
+Using *removed biomass* in 2015 and *standing biomass* in 2022 (remaining biomass after removal).
 
--   Calculate diversity indices
+Calculate three functional group removal treatments:
 
--   Part 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
+-   functional group richness (number of functional group present: 0, 1, 2, 3)
 
--   We ran the same analysis for each functional group separate (e.g. plots were graminoids present, FB, B, none)
+-   functional group identity (which functional group is present: B, F, GF,...)
 
--   Something with diversity
-
-### Standardization of removed biomass
-
+-   factorial functional group remaining
 
 ```{r}
-#| label: fig-standing-biomass-stacked
-#| fig-cap: "Standing biomass by functional group and treatment across the climate grid"
+#| label: tbl-removal-treatments
+#| tbl-cap: "Factorial functional group removal treatments"
 #| echo: false
 #| warning: false
 #| message: false
 
-# Load the figure from targets
-if (!exists("fig_standing_biomass_stacked")) tar_load(fig_standing_biomass_stacked)
+tar_load(standing_biomass_22_wide)
 
-# Display plot
-fig_standing_biomass_stacked
+standing_biomass_22_wide |>
+  distinct(fg_removed, G_treat, F_treat, B_treat) |>
+  mutate(
+    n_groups_removed = G_treat + F_treat + B_treat,
+    removal = factor(
+      fg_removed,
+      levels = c("none", "G", "F", "B", "GF", "GB", "FB"),
+      labels = c(
+        "None",
+        "Graminoids",
+        "Forbs",
+        "Bryophytes",
+        "Graminoids + forbs",
+        "Graminoids + bryophytes",
+        "Forbs + bryophytes"
+      )
+    )
+  ) |>
+  arrange(n_groups_removed, removal) |>
+  select(removal, G_treat, F_treat, B_treat) |>
+  gt() |>
+  cols_label(
+    removal = "Removal",
+    G_treat = "Graminoids",
+    F_treat = "Forbs",
+    B_treat = "Bryophytes"
+  )
 ```
 
+PART 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
 
-```{r}
-#| label: fig-removed-biomass-stacked
-#| fig-cap: "Removed biomass by functional group and treatment across the climate grid"
-#| echo: false
-#| warning: false
-#| message: false
+**Functional group richness and identity:** compare full model with 2-way interaction model
 
-# Load the figure from targets
-if (!exists("fig_removed_biomass_stacked")) tar_load(fig_removed_biomass_stacked)
+*Full model*: standing biomass \~ fg_richness \* precipitation_scaled \* temperature_scaled + (1\|siteID)
 
-# Display plot
-fig_removed_biomass_stacked
-```
+*2-way model*: standing biomass \~ fg_richness + precipitation_scaled + temperature_scaled + fg_richness:precipitation_scaled + fg_richness:temperature_scaled + precipitation_scaled:temperature_scaled + (1\|siteID)
 
+**Factorial functional group:** only 2-way interactions
 
-```{r}
-#| label: fig-prop-removed-biomass-stacked
-#| fig-cap: "Proportional removed biomass by functional group and treatment across the climate grid"
-#| echo: false
-#| warning: false
-#| message: false
+glmmTMB( total_biomass \~ (G_treat + F_treat + B_treat)\^2 + temperature_scaled \* precipitation_scaled + (G_treat + F_treat + B_treat):(temperature_scaled + precipitation_scaled) + (1 \| siteID/blockID)
 
-# Load the figure from targets
-if (!exists("fig_prop_removed_biomass_stacked")) tar_load(fig_prop_removed_biomass_stacked)
-
-# Display plot
-fig_prop_removed_biomass_stacked
-```
-
-
-```{r}
-#| label: fig-control-biomass-by-site
-#| fig-cap: "Total control biomass by site showing variation in baseline biomass across sites"
-#| echo: false
-#| warning: false
-#| message: false
-
-# Load the figure from targets
-if (!exists("fig_control_biomass_by_site")) tar_load(fig_control_biomass_by_site)
-
-# Display plot
-fig_control_biomass_by_site
-```
-
-
-```{r}
-#| label: fig-removed-biomass-comparison
-#| fig-cap: "Comparison of raw removed biomass and proportional removed biomass showing the effect of site-specific standardization"
-#| echo: false
-#| warning: false
-#| message: false
-
-# Load the figure from targets
-if (!exists("fig_removed_biomass_comparison")) tar_load(fig_removed_biomass_comparison)
-
-# Display plot
-fig_removed_biomass_comparison
-```
+PART 2: Biomass compensation within each remaining functional group
