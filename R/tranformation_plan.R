@@ -320,6 +320,15 @@ transformation_plan <- list(
       mutate(total_biomass = sum(F,G,B)) |>
       ungroup() |>
       tidylog::filter(fg_removed != "FGB")
+  ),
+
+  tar_target(
+    name = standing_biomass_22_cover_15,
+    command = standing_biomass_22_wide |>
+      tidylog::left_join(fg_cover |> filter(year == 2015) |> select(siteID, blockID, total_graminoids, total_forbs, total_bryophytes)) |>
+      rename(G_cover = total_graminoids,
+             F_cover = total_forbs,
+             B_cover = total_bryophytes)
   )
 
 )
