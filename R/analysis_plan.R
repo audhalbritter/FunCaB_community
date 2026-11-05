@@ -961,9 +961,15 @@ tar_target(
   name = mod_F_comp_abs,
   command = glmmTMB(
     F ~
-      G * B * temperature_scaled +
-      G * B * precipitation_scaled +
-      temperature_scaled:precipitation_scaled +
+      G_treat * B_treat +
+      temperature_scaled * precipitation_scaled +
+      G_cover + B_cover + B_cover +
+
+      # Do removal effects vary with climate?
+      (G_treat + B_treat):(temperature_scaled + precipitation_scaled) +
+
+      # Do removal effects vary with initial group quantities?
+      (G_treat + B_treat):(G_cover + F_cover + B_cover) +
       (1 | siteID/blockID),
     family = Gamma(link = "log"),
     data = F_comp_dat
@@ -1131,9 +1137,15 @@ tar_target(
   name = mod_G_comp_abs,
   command = glmmTMB(
     G ~
-      F * B * temperature_scaled +
-      F * B * precipitation_scaled +
-      temperature_scaled:precipitation_scaled +
+      F_treat * B_treat +
+      temperature_scaled * precipitation_scaled +
+      G_cover + B_cover + B_cover +
+
+      # Do removal effects vary with climate?
+      (B_treat + F_treat):(temperature_scaled + precipitation_scaled) +
+
+      # Do removal effects vary with initial group quantities?
+      (F_treat + B_treat):(G_cover + F_cover + B_cover) +
       (1 | siteID/blockID),
     family = Gamma(link = "log"),
     data = G_comp_dat
