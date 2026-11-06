@@ -249,54 +249,54 @@ tar_target(
   # ------------------------------------------------------------
   # Contrasts at mean temperature and mean precipitation
   # ------------------------------------------------------------
-  tar_target(
-    name = B_comp_emm_mean_climate,
-    command = emmeans(
-      mod_B_comp,
-      ~ G_treat * F_treat,
-      at = list(
-        temperature_scaled = 1.05,
-        precipitation_scaled = 2.21
-      )
-    )
-  ),
-
-  tar_target(
-    name = B_comp_contrasts_mean_climate,
-    command = contrast(
-      B_comp_emm_mean_climate,
-      method = "trt.vs.ctrl",
-      ref = 1,
-      adjust = "holm"
-    ) |>
-      summary(
-        type = "response",
-        infer = c(TRUE, TRUE)
-      ) |>
-      as.data.frame()
-  ),
-
-  tar_target(
-    name = B_comp_contrasts_mean_climate_table,
-    command = B_comp_contrasts_mean_climate |>
-      mutate(
-        ratio = round(ratio, 2),
-        asymp.LCL = round(asymp.LCL, 2),
-        asymp.UCL = round(asymp.UCL, 2),
-        `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
-        p.value = case_when(
-          p.value < 0.001 ~ "<0.001",
-          TRUE ~ format(round(p.value, 3), nsmall = 3)
-        )
-      ) |>
-      select(contrast, ratio, `95% CI`, p.value) |>
-      gt() |>
-      cols_label(
-        contrast = "Contrast",
-        ratio = "Biomass ratio",
-        p.value = md("Adjusted *p*-value")
-      )
-  ),
+#  tar_target(
+#    name = B_comp_emm_mean_climate,
+#    command = emmeans(
+#      mod_B_comp,
+#      ~ G_treat * F_treat|temperature_scaled,
+#      at = list(
+#        temperature_scaled = 1.05,
+#        precipitation_scaled = 2.21
+#      )
+#    )
+#  ),
+#
+#  tar_target(
+#    name = B_comp_contrasts_mean_climate,
+#    command = contrast(
+#      B_comp_emm_mean_climate,
+#      method = "trt.vs.ctrl",
+#      ref = 1,
+#      adjust = "holm"
+#    ) |>
+#      summary(
+#        type = "response",
+#        infer = c(TRUE, TRUE)
+#      ) |>
+#      as.data.frame()
+#  ),
+#
+#  tar_target(
+#    name = B_comp_contrasts_mean_climate_table,
+#    command = B_comp_contrasts_mean_climate |>
+#      mutate(
+#        ratio = round(ratio, 2),
+#        asymp.LCL = round(asymp.LCL, 2),
+#        asymp.UCL = round(asymp.UCL, 2),
+#        `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
+#        p.value = case_when(
+#          p.value < 0.001 ~ "<0.001",
+#          TRUE ~ format(round(p.value, 3), nsmall = 3)
+#        )
+#      ) |>
+#      select(contrast, ratio, `95% CI`, p.value) |>
+#      gt() |>
+#      cols_label(
+#        contrast = "Contrast",
+#        ratio = "Biomass ratio",
+#        p.value = md("Adjusted *p*-value")
+#      )
+#  ),
 
   # ------------------------------------------------------------
   # Temperature-dependent contrasts
