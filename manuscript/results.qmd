@@ -9,7 +9,7 @@ library(targets)
 library(tarchetypes)
 library(gt)
 
-targets::tar_config_set(store = here::here("_targets"))
+targets::tar_config_set(store = "_targets")
 source(here::here("R/functions/tidymodels.r"))
 ```
 
