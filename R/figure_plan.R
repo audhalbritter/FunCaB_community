@@ -205,12 +205,48 @@ figure_plan <- list(
   ),
 
   tar_target(
+    name = fig_B_temperature_contrast,
+      command = ggplot(
+        B_comp_contrasts_temperature,
+        aes(x = temperature_scaled, y = estimate)
+      ) +
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_pointrange(
+        aes(ymin = asymp.LCL, ymax = asymp.UCL)
+      ) +
+      labs(
+        x = "Scaled temperature",
+        y = "G × F interaction in bryophyte biomass (g m⁻²)" # is this the correct unit?
+      ) +
+      theme_classic()+
+      facet_wrap(~contrast)
+  ),
+
+  tar_target(
+    name = fig_B_precipitation_contrast,
+      command = ggplot(
+        B_comp_contrasts_precipitation,
+        aes(x = precipitation_scaled, y = estimate)
+      ) +
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_pointrange(
+        aes(ymin = asymp.LCL, ymax = asymp.UCL)
+      ) +
+      labs(
+        x = "Scaled precipitation",
+        y = "G × F interaction in bryophyte biomass (g m⁻²)" # is this the correct unit?
+      ) +
+      theme_classic()+
+      facet_wrap(~contrast)
+  ),
+
+  tar_target(
     name = fig_G_comp_precipitation_contrast,
     command = G_comp_contrasts_precipitation |>
       ggplot(
         aes(
           x = precipitation_scaled,
-          y = ratio,
+          y = estimate,
           colour = contrast,
           fill = contrast,
           group = contrast
@@ -230,7 +266,8 @@ figure_plan <- list(
         colour = "Contrast",
         fill = "Contrast"
       ) +
-      theme_classic()
+      theme_classic() +
+      facet_grid(~category)
   ),
 
   tar_target(
@@ -239,7 +276,7 @@ figure_plan <- list(
       ggplot(
         aes(
           x = temperature_scaled,
-          y = ratio,
+          y = estimate,
           colour = contrast,
           fill = contrast,
           group = contrast
@@ -259,7 +296,8 @@ figure_plan <- list(
         colour = "Contrast",
         fill = "Contrast"
       ) +
-      theme_classic()
+      theme_classic() +
+      facet_grid(~category)
   ),
 
   tar_target(
@@ -268,7 +306,7 @@ figure_plan <- list(
       ggplot(
         aes(
           x = temperature_scaled,
-          y = ratio,
+          y = estimate,
           colour = contrast,
           fill = contrast,
           group = contrast
@@ -295,7 +333,8 @@ figure_plan <- list(
         colour = "Contrast",
         fill = "Contrast"
       ) +
-      theme_classic()
+      theme_classic() +
+      facet_grid(~category)
   ),
 
   tar_target(
@@ -304,7 +343,7 @@ figure_plan <- list(
       ggplot(
         aes(
           x = precipitation_scaled,
-          y = ratio,
+          y = estimate,
           colour = contrast,
           fill = contrast,
           group = contrast
@@ -331,7 +370,8 @@ figure_plan <- list(
         colour = "Contrast",
         fill = "Contrast"
       ) +
-      theme_classic()
+      theme_classic() +
+      facet_grid(~category)
   ),
 
   tar_target(
@@ -340,7 +380,7 @@ figure_plan <- list(
       ggplot(
         aes(
           x = precipitation_scaled,
-          y = ratio,
+          y = estimate,
           colour = contrast,
           fill = contrast,
           group = contrast
@@ -360,7 +400,8 @@ figure_plan <- list(
         colour = "Contrast",
         fill = "Contrast"
       ) +
-      theme_classic()
+      theme_classic() +
+      facet_grid(~category)
   ),
 
   tar_target(
@@ -369,7 +410,7 @@ figure_plan <- list(
       ggplot(
         aes(
           x = temperature_scaled,
-          y = ratio,
+          y = estimate,
           colour = contrast,
           fill = contrast,
           group = contrast
@@ -389,7 +430,8 @@ figure_plan <- list(
         colour = "Contrast",
         fill = "Contrast"
       ) +
-      theme_classic()
+      theme_classic() +
+      facet_grid(~category)
   )
 
 )
