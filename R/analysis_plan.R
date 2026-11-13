@@ -147,7 +147,7 @@ tar_target(
   }
 ),
 
-
+###
 # PART 2: Single group effects
 
   # ------------------------------------------------------------
@@ -308,29 +308,59 @@ tar_target(
       mod_B_comp,
       ~ G_treat * F_treat | temperature_scaled,
       at = list(
-        temperature_scaled = c(
-          1.05 - 0.22,
-          1.05,
-          1.05 + 0.22
-        ),
+        temperature_scaled = c(0.78, 1.05, 1.27),
         precipitation_scaled = 2.21
       )
-    )
+    ) |>
+      # transform back to the response unit scale
+      regrid(transform = "response")
   ),
 
   tar_target(
     name = B_comp_contrasts_temperature,
-    command = contrast(
+    command = {
+      primary_comparisons <- list(
+           "G removal vs control (F remains)"  = c(-1,  1,  0,  0),
+           "F removal vs control (G remains)"  = c(-1,  0,  1,  0),
+           "GF removal vs control"        = c(-1,  0,  0,  1)
+        )
+
+      factorial_comparisons <- list(
+        "GF removal vs F removal" = c( 0,  0, -1,  1),
+        "GF removal vs G removal" = c( 0, -1,  0,  1),
+        "(GF removal - F removal) - (G removal - control)" = c( 1, -1, -1,  1)
+        )
+
+      primary_contrast <- contrast(
       B_comp_emm_temperature,
-      method = "trt.vs.ctrl",
-      ref = 1,
-      adjust = "holm"
-    ) |>
+      method = primary_comparisons,
+      by = "temperature_scaled",
+      adjust = "holm") |>
       summary(
         type = "response",
         infer = c(TRUE, TRUE)
       ) |>
-      as.data.frame()
+      tibble()
+
+      factorial_contrast <- contrast(
+        B_comp_emm_temperature,
+        method = factorial_comparisons,
+        by = "temperature_scaled",
+        adjust = "holm") |>
+        summary(
+          type = "response",
+          infer = c(TRUE, TRUE)
+        ) |>
+        tibble()
+
+      full_join(primary_contrast, factorial_contrast) |>
+        arrange(temperature_scaled) |>
+        mutate(category = case_when(
+          contrast %in% c("G removal vs control (F remains)", "F removal vs control (G remains)", "GF removal vs control") ~ "Primary contrasts",
+          TRUE ~ "Factorial contrasts"
+        ))
+
+      }
   ),
 
 
@@ -345,25 +375,59 @@ tar_target(
       mod_B_comp,
       ~ G_treat * F_treat | precipitation_scaled,
       at = list(
-        precipitation_scaled = c(0.87, 2.22, 4.65),
+        precipitation_scaled = c(1.15, 1.5, 2.56, 3.65), # these are the mean precipitation values for each precipitation level: would we rather use a min or max?
         temperature_scaled = 1.05
       )
-    )
+    ) |>
+      # transform back to the response unit scale
+      regrid(transform = "response")
   ),
 
   tar_target(
     name = B_comp_contrasts_precipitation,
-    command = contrast(
-      B_comp_emm_precipitation,
-      method = "trt.vs.ctrl",
-      ref = 1,
-      adjust = "holm"
-    ) |>
-      summary(
-        type = "response",
-        infer = c(TRUE, TRUE)
-      ) |>
-      as.data.frame()
+    command = {
+      primary_comparisons <- list(
+        "G removal vs control (F remains)"  = c(-1,  1,  0,  0),
+        "F removal vs control (G remains)"  = c(-1,  0,  1,  0),
+        "GF removal vs control"        = c(-1,  0,  0,  1)
+      )
+
+      factorial_comparisons <- list(
+        "GF removal vs F removal" = c( 0,  0, -1,  1),
+        "GF removal vs G removal" = c( 0, -1,  0,  1),
+        "(GF removal - F removal) - (G removal - control)" = c( 1, -1, -1,  1)
+      )
+
+      primary_contrast <- contrast(
+        B_comp_emm_precipitation,
+        method = primary_comparisons,
+        by = "precipitation_scaled",
+        adjust = "holm") |>
+        summary(
+          type = "response",
+          infer = c(TRUE, TRUE)
+        ) |>
+        tibble()
+
+      factorial_contrast <- contrast(
+        B_comp_emm_precipitation,
+        method = factorial_comparisons,
+        by = "precipitation_scaled",
+        adjust = "holm") |>
+        summary(
+          type = "response",
+          infer = c(TRUE, TRUE)
+        ) |>
+        tibble()
+
+      full_join(primary_contrast, factorial_contrast) |>
+        arrange(precipitation_scaled) |>
+        mutate(category = case_when(
+          contrast %in% c("G removal vs control (F remains)", "F removal vs control (G remains)", "GF removal vs control") ~ "Primary contrasts",
+          TRUE ~ "Factorial contrasts"
+        ))
+
+    }
   ),
 
 
@@ -395,7 +459,9 @@ tar_target(
 
 ),
 
-# Fixed-effect coefficient output
+# ------------------------------------------------------------
+# Full-model coefficient table
+# ------------------------------------------------------------
 tar_target(
   name = F_comp_model_results,
   command = broom.mixed::tidy(
@@ -446,6 +512,7 @@ tar_target(
 
 ),
 
+# ------------------------------------------------------------
 # DHARMa diagnostics
 tar_target(
   name = F_comp_dharma,
@@ -466,80 +533,119 @@ tar_target(
 ),
 
 # Contrasts at mean climate
-tar_target(
-  name = F_comp_emm_mean_climate,
-  command = emmeans::emmeans(
-    mod_F_comp,
-    ~ G_treat * B_treat,
-    at = list(
-      temperature_scaled = 1.05,
-      precipitation_scaled = 2.21
-    )
-  )
+#tar_target(
+#  name = F_comp_emm_mean_climate,
+#  command = emmeans::emmeans(
+#    mod_F_comp,
+#    ~ G_treat * B_treat,
+#    at = list(
+#      temperature_scaled = 1.05,
+#      precipitation_scaled = 2.21
+#    )
+#  )
+#
+#),
+#
+#tar_target(
+#  name = F_comp_contrasts_mean_climate,
+#  command = emmeans::contrast(
+#    F_comp_emm_mean_climate,
+#    method = "trt.vs.ctrl",
+#    ref = 1,
+#    adjust = "holm"
+#  ) |>
+#    summary(type = "response", infer = c(TRUE, TRUE)) |>
+#    as.data.frame()
+#
+#),
+#
+#tar_target(
+#  name = F_comp_contrasts_mean_climate_table,
+#  command = F_comp_contrasts_mean_climate |>
+#    mutate(
+#      ratio = round(ratio, 2),
+#      asymp.LCL = round(asymp.LCL, 2),
+#      asymp.UCL = round(asymp.UCL, 2),
+#      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
+#      p.value = case_when(
+#        p.value < 0.001 ~ "<0.001",
+#        TRUE ~ format(round(p.value, 3), nsmall = 3)
+#      )
+#    ) |>
+#    select(contrast, ratio, `95% CI`, p.value) |>
+#    gt::gt() |>
+#    gt::cols_label(
+#      contrast = "Contrast",
+#      ratio = "Biomass ratio",
+#      p.value = gt::md("Adjusted *p*-value")
+#    )
+#
+#),
 
-),
-
-tar_target(
-  name = F_comp_contrasts_mean_climate,
-  command = emmeans::contrast(
-    F_comp_emm_mean_climate,
-    method = "trt.vs.ctrl",
-    ref = 1,
-    adjust = "holm"
-  ) |>
-    summary(type = "response", infer = c(TRUE, TRUE)) |>
-    as.data.frame()
-
-),
-
-tar_target(
-  name = F_comp_contrasts_mean_climate_table,
-  command = F_comp_contrasts_mean_climate |>
-    mutate(
-      ratio = round(ratio, 2),
-      asymp.LCL = round(asymp.LCL, 2),
-      asymp.UCL = round(asymp.UCL, 2),
-      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
-      p.value = case_when(
-        p.value < 0.001 ~ "<0.001",
-        TRUE ~ format(round(p.value, 3), nsmall = 3)
-      )
-    ) |>
-    select(contrast, ratio, `95% CI`, p.value) |>
-    gt::gt() |>
-    gt::cols_label(
-      contrast = "Contrast",
-      ratio = "Biomass ratio",
-      p.value = gt::md("Adjusted *p*-value")
-    )
-
-),
-
-# Temperature-dependent contrasts; precipitation fixed at mean
+# ------------------------------------------------------------
+# Temperature-dependent contrasts
+# Precipitation held at its mean
+# ------------------------------------------------------------
 tar_target(
   name = F_comp_emm_temperature,
   command = emmeans::emmeans(
     mod_F_comp,
     ~ G_treat * B_treat | temperature_scaled,
     at = list(
-      temperature_scaled = c(1.05 - 0.22, 1.05, 1.05 + 0.22),
+      temperature_scaled = c(0.78, 1.05, 1.27),
       precipitation_scaled = 2.21
     )
-  )
+  ) |>
+    # transform back to the response unit scale
+    regrid(transform = "response")
 
 ),
 
 tar_target(
   name = F_comp_contrasts_temperature,
-  command = emmeans::contrast(
-    F_comp_emm_temperature,
-    method = "trt.vs.ctrl",
-    ref = 1,
-    adjust = "holm"
-  ) |>
-    summary(type = "response", infer = c(TRUE, TRUE)) |>
-    as.data.frame()
+  command = {
+    primary_comparisons <- list(
+      "G removal vs control (B remains)"  = c(-1,  1,  0,  0),
+      "B removal vs control (G remains)"  = c(-1,  0,  1,  0),
+      "GB removal vs control"        = c(-1,  0,  0,  1)
+    )
 
+    factorial_comparisons <- list(
+      "GB removal vs B removal" = c( 0,  0, -1,  1),
+      "GB removal vs G removal" = c( 0, -1,  0,  1),
+      "(GB removal - B removal) - (G removal - control)" = c( 1, -1, -1,  1)
+    )
+
+    primary_contrast <- contrast(
+      F_comp_emm_temperature,
+      method = primary_comparisons,
+      by = "temperature_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    factorial_contrast <- contrast(
+      F_comp_emm_temperature,
+      method = factorial_comparisons,
+      by = "temperature_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    full_join(primary_contrast, factorial_contrast) |>
+      arrange(temperature_scaled) |>
+      mutate(category = case_when(
+        contrast %in% c("G removal vs control (B remains)", "B removal vs control (G remains)", "GB removal vs control") ~ "Primary contrasts",
+        TRUE ~ "Factorial contrasts"
+      ))
+
+  }
 ),
 
 
@@ -550,23 +656,60 @@ tar_target(
     mod_F_comp,
     ~ G_treat * B_treat | precipitation_scaled,
     at = list(
-      precipitation_scaled = c(0.87, 2.22, 4.65),
+      precipitation_scaled = c(1.15, 1.5, 2.56, 3.65),
       temperature_scaled = 1.05
     )
-  )
+  ) |>
+    # transform back to the response unit scale
+    regrid(transform = "response")
 
 ),
 
 tar_target(
   name = F_comp_contrasts_precipitation,
-  command = emmeans::contrast(
-    F_comp_emm_precipitation,
-    method = "trt.vs.ctrl",
-    ref = 1,
-    adjust = "holm"
-  ) |>
-    summary(type = "response", infer = c(TRUE, TRUE)) |>
-    as.data.frame()
+  command =  {
+    primary_comparisons <- list(
+      "G removal vs control (B remains)"  = c(-1,  1,  0,  0),
+      "B removal vs control (G remains)"  = c(-1,  0,  1,  0),
+      "GB removal vs control"        = c(-1,  0,  0,  1)
+    )
+
+    factorial_comparisons <- list(
+      "GB removal vs B removal" = c( 0,  0, -1,  1),
+      "GB removal vs G removal" = c( 0, -1,  0,  1),
+      "(GB removal - B removal) - (G removal - control)" = c( 1, -1, -1,  1)
+    )
+
+    primary_contrast <- contrast(
+      F_comp_emm_precipitation,
+      method = primary_comparisons,
+      by = "precipitation_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    factorial_contrast <- contrast(
+      F_comp_emm_precipitation,
+      method = factorial_comparisons,
+      by = "precipitation_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    full_join(primary_contrast, factorial_contrast) |>
+      arrange(precipitation_scaled) |>
+      mutate(category = case_when(
+        contrast %in% c("G removal vs control (B remains)", "B removal vs control (G remains)", "GB removal vs control") ~ "Primary contrasts",
+        TRUE ~ "Factorial contrasts"
+      ))
+
+  }
 
 ),
 
@@ -598,7 +741,9 @@ tar_target(
 
 ),
 
-# Fixed-effect coefficient output
+# ------------------------------------------------------------
+# Full-model coefficient table
+
 tar_target(
   name = G_comp_model_results,
   command = broom.mixed::tidy(
@@ -649,7 +794,9 @@ tar_target(
 
 ),
 
+# ------------------------------------------------------------
 # DHARMa diagnostics
+
 tar_target(
   name = G_comp_dharma,
   command = {
@@ -669,54 +816,54 @@ tar_target(
 ),
 
 # Contrasts at mean climate
-tar_target(
-  name = G_comp_emm_mean_climate,
-  command = emmeans::emmeans(
-    mod_G_comp,
-    ~ F_treat * B_treat,
-    at = list(
-      temperature_scaled = 1.05,
-      precipitation_scaled = 2.21
-    )
-  )
-
-),
-
-tar_target(
-  name = G_comp_contrasts_mean_climate,
-  command = emmeans::contrast(
-    G_comp_emm_mean_climate,
-    method = "trt.vs.ctrl",
-    ref = 1,
-    adjust = "holm"
-  ) |>
-    summary(type = "response", infer = c(TRUE, TRUE)) |>
-    as.data.frame()
-
-),
-
-tar_target(
-  name = G_comp_contrasts_mean_climate_table,
-  command = G_comp_contrasts_mean_climate |>
-    mutate(
-      ratio = round(ratio, 2),
-      asymp.LCL = round(asymp.LCL, 2),
-      asymp.UCL = round(asymp.UCL, 2),
-      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
-      p.value = case_when(
-        p.value < 0.001 ~ "<0.001",
-        TRUE ~ format(round(p.value, 3), nsmall = 3)
-      )
-    ) |>
-    select(contrast, ratio, `95% CI`, p.value) |>
-    gt::gt() |>
-    gt::cols_label(
-      contrast = "Contrast",
-      ratio = "Biomass ratio",
-      p.value = gt::md("Adjusted *p*-value")
-    )
-
-),
+#tar_target(
+#  name = G_comp_emm_mean_climate,
+#  command = emmeans::emmeans(
+#    mod_G_comp,
+#    ~ F_treat * B_treat,
+#    at = list(
+#      temperature_scaled = 1.05,
+#      precipitation_scaled = 2.21
+#    )
+#  )
+#
+#),
+#
+#tar_target(
+#  name = G_comp_contrasts_mean_climate,
+#  command = emmeans::contrast(
+#    G_comp_emm_mean_climate,
+#    method = "trt.vs.ctrl",
+#    ref = 1,
+#    adjust = "holm"
+#  ) |>
+#    summary(type = "response", infer = c(TRUE, TRUE)) |>
+#    as.data.frame()
+#
+#),
+#
+#tar_target(
+#  name = G_comp_contrasts_mean_climate_table,
+#  command = G_comp_contrasts_mean_climate |>
+#    mutate(
+#      ratio = round(ratio, 2),
+#      asymp.LCL = round(asymp.LCL, 2),
+#      asymp.UCL = round(asymp.UCL, 2),
+#      `95% CI` = paste0(asymp.LCL, "–", asymp.UCL),
+#      p.value = case_when(
+#        p.value < 0.001 ~ "<0.001",
+#        TRUE ~ format(round(p.value, 3), nsmall = 3)
+#      )
+#    ) |>
+#    select(contrast, ratio, `95% CI`, p.value) |>
+#    gt::gt() |>
+#    gt::cols_label(
+#      contrast = "Contrast",
+#      ratio = "Biomass ratio",
+#      p.value = gt::md("Adjusted *p*-value")
+#    )
+#
+#),
 
 # Temperature-dependent contrasts; precipitation fixed at mean
 tar_target(
@@ -725,23 +872,60 @@ tar_target(
     mod_G_comp,
     ~ F_treat * B_treat | temperature_scaled,
     at = list(
-      temperature_scaled = c(1.05 - 0.22, 1.05, 1.05 + 0.22),
+      temperature_scaled = c(0.78, 1.05, 1.27),
       precipitation_scaled = 2.21
     )
-  )
+  ) |>
+    # transform back to the response unit scale
+    regrid(transform = "response")
 
 ),
 
 tar_target(
   name = G_comp_contrasts_temperature,
-  command = emmeans::contrast(
-    G_comp_emm_temperature,
-    method = "trt.vs.ctrl",
-    ref = 1,
-    adjust = "holm"
-  ) |>
-    summary(type = "response", infer = c(TRUE, TRUE)) |>
-    as.data.frame()
+  command = {
+    primary_comparisons <- list(
+      "F removal vs control (B remains)"  = c(-1,  1,  0,  0),
+      "B removal vs control (F remains)"  = c(-1,  0,  1,  0),
+      "FB removal vs control"        = c(-1,  0,  0,  1)
+    )
+
+    factorial_comparisons <- list(
+      "FB removal vs B removal" = c( 0,  0, -1,  1),
+      "FB removal vs F removal" = c( 0, -1,  0,  1),
+      "(FB removal - B removal) - (F removal - control)" = c( 1, -1, -1,  1)
+    )
+
+    primary_contrast <- contrast(
+      G_comp_emm_temperature,
+      method = primary_comparisons,
+      by = "temperature_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    factorial_contrast <- contrast(
+      G_comp_emm_temperature,
+      method = factorial_comparisons,
+      by = "temperature_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    full_join(primary_contrast, factorial_contrast) |>
+      arrange(temperature_scaled) |>
+      mutate(category = case_when(
+        contrast %in% c("F removal vs control (B remains)", "B removal vs control (F remains)", "FB removal vs control") ~ "Primary contrasts",
+        TRUE ~ "Factorial contrasts"
+      ))
+
+  }
 
 ),
 
@@ -754,24 +938,60 @@ tar_target(
     mod_G_comp,
     ~ F_treat * B_treat | precipitation_scaled,
     at = list(
-      precipitation_scaled = c(0.87, 2.22, 4.65),
+      precipitation_scaled = c(1.15, 1.5, 2.56, 3.65),
       temperature_scaled = 1.05
     )
-  )
+  ) |>
+    # transform back to the response unit scale
+    regrid(transform = "response")
 
 ),
 
 tar_target(
   name = G_comp_contrasts_precipitation,
-  command = emmeans::contrast(
-    G_comp_emm_precipitation,
-    method = "trt.vs.ctrl",
-    ref = 1,
-    adjust = "holm"
-  ) |>
-    summary(type = "response", infer = c(TRUE, TRUE)) |>
-    as.data.frame()
+  command = {
+    primary_comparisons <- list(
+      "F removal vs control (B remains)"  = c(-1,  1,  0,  0),
+      "B removal vs control (F remains)"  = c(-1,  0,  1,  0),
+      "FB removal vs control"        = c(-1,  0,  0,  1)
+    )
 
+    factorial_comparisons <- list(
+      "FB removal vs B removal" = c( 0,  0, -1,  1),
+      "FB removal vs F removal" = c( 0, -1,  0,  1),
+      "(FB removal - B removal) - (F removal - control)" = c( 1, -1, -1,  1)
+    )
+
+    primary_contrast <- contrast(
+      G_comp_emm_precipitation,
+      method = primary_comparisons,
+      by = "precipitation_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    factorial_contrast <- contrast(
+      G_comp_emm_precipitation,
+      method = factorial_comparisons,
+      by = "precipitation_scaled",
+      adjust = "holm") |>
+      summary(
+        type = "response",
+        infer = c(TRUE, TRUE)
+      ) |>
+      tibble()
+
+    full_join(primary_contrast, factorial_contrast) |>
+      arrange(precipitation_scaled) |>
+      mutate(category = case_when(
+        contrast %in% c("F removal vs control (B remains)", "B removal vs control (F remains)", "FB removal vs control") ~ "Primary contrasts",
+        TRUE ~ "Factorial contrasts"
+      ))
+
+  }
 ),
 
 
