@@ -175,6 +175,28 @@ tar_read(fig_B_comp_precipitation_contrast)
 tar_read(fig_B_comp_temperature_contrast)
 ```
 
+The results could also be presented thus:
+```{r}
+#| label: fig-results-bryophyte-biomass-temperature-contrasts
+#| echo: false
+#| warning: false
+#| message: false
+
+# print in results
+tar_read(fig_B_temperature_contrast)
+```
+```{r}
+#| label: fig-results-bryophyte-biomass-precipitation-contrasts
+#| echo: false
+#| warning: false
+#| message: false
+
+# print in results
+tar_read(fig_B_precipitation_contrast)
+```
+
+
+
 #### Graminoids present
 
 ```{r}
