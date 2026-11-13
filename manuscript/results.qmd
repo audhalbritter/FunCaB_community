@@ -9,7 +9,7 @@ library(targets)
 library(tarchetypes)
 library(gt)
 
-targets::tar_config_set(store = here::here("_targets"))
+targets::tar_config_set(store = "_targets")
 source(here::here("R/functions/tidymodels.r"))
 ```
 
@@ -174,6 +174,28 @@ tar_read(fig_B_comp_precipitation_contrast)
 # print in results
 tar_read(fig_B_comp_temperature_contrast)
 ```
+
+The results could also be presented thus:
+```{r}
+#| label: fig-results-bryophyte-biomass-temperature-contrasts
+#| echo: false
+#| warning: false
+#| message: false
+
+# print in results
+tar_read(fig_B_temperature_contrast)
+```
+```{r}
+#| label: fig-results-bryophyte-biomass-precipitation-contrasts
+#| echo: false
+#| warning: false
+#| message: false
+
+# print in results
+tar_read(fig_B_precipitation_contrast)
+```
+
+
 
 #### Graminoids present
 
