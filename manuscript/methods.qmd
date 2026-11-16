@@ -43,7 +43,7 @@ Plant community composition recorded annually between 2015 and 2019 across all e
 
 ### Data preparation
 
-**Biomass standardization:** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
+
 
 ### Analysis
 
@@ -95,9 +95,9 @@ standing_biomass_22_wide |>
 
 **PART 1: Community analysis**
 
-Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran Gaussian glmmTMB models with standing biomass as response and fg, plus temperature and precipitation as predictors. Block nested within site (`1|siteID/blockID`) was used as random effect. Temperature and precipitation were scaled.
-
 **Functional group richness:** compare full model with 2-way interaction model
+
+To test how functional group richness (i.e. number of remaining functional groups) affects standing biomass, we ran a Gaussian glmmTMB models with standing biomass as response and functional group richness, temperature and precipitation as predictors. Block nested within site (`1|siteID/blockID`) was used as random effect. Temperature and precipitation were scaled. We compared the full model with all interactions to the two-way interaction model (see below).
 
 *Full model*: standing biomass \~ fg_richness \* precipitation_scaled \* temperature_scaled + (1\|siteID/blockID)
 
@@ -105,6 +105,87 @@ Test how the number of removed functional groups, identity of removed groups, or
 
 **Factorial functional group:** only 2-way interactions
 
-glmmTMB(total_biomass \~ G_treat:F_treat + G_treat:B_treat + F_treat:B_treat + T \* P + G_treat \* T + G_treat \* P + F_treat \* T + F_treat \* P + B_treat \* T + B_treat \* P + (1 \| siteID/blockID)
+How does functional group removal affect standing biomass:\
+Response: total standing biomass\
+Predictor: FG removed x climate
+
+```{r}
+#| label: full-model
+#| echo: true
+#| eval: false
+
+mod_B_comp <- glmmTMB(
+  total_biomass ~
+  G_treat:F_treat +
+  G_treat:B_treat +
+  F_treat:B_treat +
+  temperature_scaled * precipitation_scaled +
+  G_treat * temperature_scaled +
+  G_treat * precipitation_scaled +
+  F_treat * temperature_scaled +
+  F_treat * precipitation_scaled +
+  B_treat * temperature_scaled +
+  B_treat * precipitation_scaled +
+  (1 | siteID/blockID),
+  family = Gamma(link = "log"),
+  data = standing_biomass_22_wide
+)
+```
+
+*Contrasts*: compare removal treatment vs intact control (mean climate)
+Holm adjustments...
+Biomass ratios...
 
 **PART 2: Functional group analysis**
+
+For subset of functional group remaining, i.e. here only described fro bryophyte remaining:\
+Response = bryophyte biomass\
+Predictors = the *other* two removals (`G_treat`, `F_treat`) × climate\
+
+```{r}
+#| label: bryophyte-model
+#| echo: true
+#| eval: false
+
+mod_B_comp <- glmmTMB(
+  B ~
+    G_treat * F_treat * temperature_scaled +
+    G_treat * F_treat * precipitation_scaled +
+    temperature_scaled:precipitation_scaled +
+    (1 | siteID/blockID),
+  family = Gamma(link = "log"),
+  data = B_comp_dat
+)
+```
+
+**Climate dependent contrasts**: keep P constant vary T and vice versa.
+
+*Primary contrasts (vs control):*
+
+Test contrasts of G removal, F removal, and GF removal versus control (neither G nor F removed).
+
+|               | **F remains** | **F removed** |
+|---------------|:--------------|:--------------|
+| **G remains** | control       | F removal     |
+| **G removed** | G removal     | GF removal    |
+
+*Does removal of FG depend on other FG:*
+
+|               | **F kept** | **F removed** |
+|---------------|:-----------|:--------------|
+| **G kept**    | control    | F only        |
+| **G removed** | G only     | GF            |
+
+What is the extra effect of adding G removal on top of F removal or vice versa:
+
+-   GF vs F only
+
+-   GF vs G only
+
+Is the effect of removing one FG the same as when the other group is still present? (interaction)
+
+-   Effect of removing G when F is kept: `G − control`
+
+-   Effect of removing G when F is already gone: `GF − F`
+
+-   Does removal of G depend on F: `(GF − F) − (G − control)`
