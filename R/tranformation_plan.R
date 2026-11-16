@@ -91,23 +91,6 @@ transformation_plan <- list(
              levels = c("none", "G", "F", "B", "GF", "GB", "FB", "FGB")))
   ),
 
-  # standardised standing biomass
-  tar_target(
-    name = standardised_standing_biomass,
-    command = standing_biomass_22 |>
-      filter(!fg_remaining %in% c("FGB", "none")) |>
-      # join to the site-level mean for controls per functional group in 2022
-      tidylog::left_join(standing_biomass_22 |>
-                           filter(fg_remaining == "FGB") |>
-                           group_by(siteID, removed_fg, fg_status, temperature_level, precipitation_level, temperature_scaled, precipitation_scaled) |>
-                           summarise(mean_standing_biomass = mean(biomass)),
-                         by = join_by(siteID, removed_fg, fg_status, temperature_level, precipitation_level, temperature_scaled, precipitation_scaled)) |>
-      # create deltas from the site-level means
-      mutate(delta_standing_biomass = biomass-mean_standing_biomass)
-
-  ),
-
-
   # filter for biomass in 2015 (without XC)
   tar_target(
     name = removed_biomass,
@@ -124,43 +107,6 @@ transformation_plan <- list(
       group_by(siteID, blockID, plotID, fg_removed, removed_fg, fg_remaining, fg_richness, fg_status, temperature_level, precipitation_level, temperature_scaled, precipitation_scaled) |>
       summarise(removed_biomass = sum(biomass)) |>
       ungroup()
-  ),
-
-
-  # standardised removed biomass globally
-  tar_target(
-    name = standardised_removed_biomass_global,
-    command =
-      {biomass_proportions_control <- removed_biomass |>
-          filter(fg_removed == "FGB") |>
-
-          # calculate mean biomass per FG in control plots (globally)
-          group_by(removed_fg, fg_status) |>
-          mutate(mean_removed_biomass_ctrl = mean(removed_biomass)) |>
-          ungroup() |>
-
-          # calculate total biomass in each control plot (globally)
-          group_by(plotID, fg_status) |>
-          mutate(total_removed_biomass_ctrl = sum(removed_biomass)) |>
-
-          # calculate global mean of total biomass in control plots
-          ungroup() |>
-          mutate(mean_total_removed_biomass_ctrl = mean(total_removed_biomass_ctrl)) |>
-
-          # calculate proportion of each functional group in 2015 control plots
-          mutate(prop_removed_biomass_ctrl = mean_removed_biomass_ctrl/mean_total_removed_biomass_ctrl) |>
-          ungroup() |>
-          # extract global biomass proportion and mean biomass of focal FG
-          distinct(removed_fg, fg_status, prop_removed_biomass_ctrl, mean_removed_biomass_ctrl)
-
-      removed_biomass |>
-        filter(fg_removed != "FGB") |>
-        tidylog::left_join(biomass_proportions_control,
-                           by = join_by(removed_fg, fg_status)) |>
-
-        # calculate cross product to get proportion of each FG in treatment plots
-        mutate(prop_removed_biomass_trt = (prop_removed_biomass_ctrl * removed_biomass)/mean_removed_biomass_ctrl)
-      }
   ),
 
   # standardised removed biomass by site
@@ -273,25 +219,6 @@ transformation_plan <- list(
   ),
 
   # analysis data
-  # standing biomass
-    tar_target(
-      name = sb_long,
-      command = standardised_standing_biomass |>
-        mutate(fg_status = "remaining") |>
-        select(-year, -removed_fg, -fg_status, -comments, -temperature, -precipitation) |>
-        rename(standing_biomass = biomass)
-    ),
-
-    tar_target(
-      name = sb_wide,
-      command = standardised_standing_biomass |>
-        mutate(fg_status = "remaining") |>
-        select(-year, -fg_status, -comments, -temperature, -precipitation) |>
-        rename(standing_biomass = biomass) |>
-        pivot_wider(names_from = removed_fg, values_from = standing_biomass, names_prefix = "sb_")
-    ),
-
-
     # removed biomass long
     tar_target(
       name = removed_biomass_long,

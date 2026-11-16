@@ -51,21 +51,6 @@ result <- check_model_diagnostics(fg_identity_analysis$model_2way)
 result  # This will plot the diagnostics
 ```
 
-### Functional group biomass
-```{r}
-#| label: fig-fg-biomass-diagnostics
-#| echo: false
-#| message: false
-#| fig-height: 12
-
-# Load the fg_biomass_analysis target
-tar_load(fg_biomass_analysis)
-
-# Check model diagnostics for the 2-way model
-result <- check_model_diagnostics(fg_biomass_analysis)
-result  # This will plot the diagnostics
-``` 
-
 ## Part 2: single groups
 
 ### Functional group richness
