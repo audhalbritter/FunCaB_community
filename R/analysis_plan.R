@@ -1588,31 +1588,6 @@ tar_target(
           dplyr::mutate(focal_fg = fg)
       })
     }
-  ),
-
-  # functional group identity by focal group (graminoids, forbs, bryophytes)
-  tar_target(
-    name = fg_identity_focal_analysis,
-    command = {
-      split_data <- split(standing_biomass_by_focal_fg, standing_biomass_by_focal_fg$focal_fg)
-      purrr::imap(split_data, function(dat, fg) {
-        compare_full_vs_2way_lmer(
-          data = dat,
-          response = "standing_biomass",
-          predictor = "fg_removed"
-        )
-      })
-    }
-  ),
-
-  tar_target(
-    name = fg_identity_focal_tidy,
-    command = {
-      purrr::imap_dfr(fg_identity_focal_analysis, function(res, fg) {
-        clean_model_terms(tidy_model(res$model_2way)) %>%
-          dplyr::mutate(focal_fg = fg)
-      })
-    }
   )
 
 )

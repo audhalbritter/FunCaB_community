@@ -47,11 +47,9 @@ Plant community composition recorded annually between 2015 and 2019 across all e
 
 Using *removed biomass* in 2015 and *standing biomass* in 2022 (remaining biomass after removal).
 
-Calculate three functional group removal treatments:
+Calculate two functional group removal treatments:
 
 -   functional group richness (number of functional group present: 0, 1, 2, 3)
-
--   functional group identity (which functional group is present: B, F, GF,...)
 
 -   factorial functional group remaining
 

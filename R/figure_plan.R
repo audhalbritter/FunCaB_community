@@ -17,45 +17,6 @@ figure_plan <- list(
                                       term_order = rev(c("fg_richness", "T", "P", "fg_richness:T", "fg_richness:P", "P:T")))
   ),
 
-  # fg identity focals
-  tar_target(
-    name = fig_fg_identity_focal_effects,
-    command = plot_tidy_effects_facet(data = fg_identity_focal_tidy,
-                                      facet_var = "focal_fg")
-  ),
-
-    tar_target(
-    name = fig_fg_identity_focal_interactions,
-    command = {
-      p1 <- plot_model(fg_identity_focal_analysis$bryophytes$model_2way,
-        type = "pred",
-        terms = c("precipitation_scaled", "fg_removed"),
-        title = "Bryophytes")
-      p2 <- plot_model(fg_identity_focal_analysis$forbs$model_2way,
-        type = "pred",
-        terms = c("precipitation_scaled", "fg_removed"),
-        title = "Forbs")
-      p3 <- plot_model(fg_identity_focal_analysis$graminoids$model_2way,
-        type = "pred",
-        terms = c("precipitation_scaled", "fg_removed"),
-        title = "Graminoids")
-      p4 <- plot_model(fg_identity_focal_analysis$bryophytes$model_2way,
-        type = "pred",
-        terms = c("temperature_scaled", "fg_removed"),
-        title = "Bryophytes")
-      p5 <- plot_model(fg_identity_focal_analysis$forbs$model_2way,
-        type = "pred",
-        terms = c("temperature_scaled", "fg_removed"),
-        title = "Forbs")
-      p6 <- plot_model(fg_identity_focal_analysis$graminoids$model_2way,
-        type = "pred",
-        terms = c("temperature_scaled", "fg_removed"),
-        title = "Graminoids")
-
-      (p1 + p2 + p3) / (p4 + p5 + p6) + plot_layout(guides = "collect") & theme_bw()
-    }
-  ),
-
   tar_target(
     name = fig_removed_biomass_stacked,
     command = {

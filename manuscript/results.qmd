@@ -262,28 +262,3 @@ tar_load(fg_richness_focal_tidy)
 
 pretty_model_table(fg_richness_focal_tidy, group_var = "focal_fg")
 ```
-
-### Functional group identity effect
-
-```{r}
-#| label: fig-fg-identity-focal-effects
-#| fig-cap: "Estimated effects from the mixed-effects model of functional group identity (graminoids only) on standing biomass. The model coefficients with confidence intervals for functional group identity, precipitation, and temperature and their interactions are shown."
-#| echo: false
-#| warning: false
-#| message: false
-
-# Load the figure from targets
-tar_print(fig_fg_identity_focal_effects)
-```
-
-```{r}
-#| label: tbl-fg-identity-focal-tidy
-#| echo: false
-#| warning: false
-#| message: false
-
-# Load the tidy model output for fg_identity_G
-tar_load(fg_identity_focal_tidy)
-
-pretty_model_table(fg_identity_focal_tidy)
-```
