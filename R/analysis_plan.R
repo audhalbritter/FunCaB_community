@@ -26,25 +26,6 @@ analysis_plan <- list(
     command = clean_model_terms(tidy_model(fg_richness_analysis$model_2way))
   ),
 
-  # functional group identity
-  tar_target(
-    name = fg_identity_analysis,
-    command = {
-      # compare full vs 2-way model
-      results <- compare_full_vs_2way_lmer(
-        data = standing_biomass_22,
-        response = "biomass",
-        # should this be fg_removed x fg_richness. Or should it be identity (fg_removed) x removed_fg?
-        predictor = "fg_removed"
-      )
-    }
-  ),
-
-  tar_target(
-    name = fg_identity_tidy,
-    command = clean_model_terms(tidy_model(fg_identity_analysis$model_2way))
-  ),
-
 # Effect of factorial functional group removal on total standing biomass
 tar_target(
   name = mod_total_comp,
