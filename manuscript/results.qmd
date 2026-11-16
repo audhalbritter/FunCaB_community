@@ -54,13 +54,25 @@ pretty_model_table(fg_richness_tidy)
 
 ```{r}
 #| label: fig-results-total-biomass
-#| fig-cap: "Biomass varies with temperature"
+#| fig-cap: "Total standing biomass per functional group removed along temperature gradients."
 #| echo: false
 #| warning: false
 #| message: false
 
 # load in figure
 tar_read(fig_total_biomass_treatment_temperature)
+
+```
+
+```{r}
+#| label: fig-results-total-biomass-precipitation
+#| fig-cap: "Total standing biomass per functional group removed along precipitation gradients."
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in figure
+tar_read(fig_total_biomass_treatment_precipitation)
 
 ```
 

@@ -113,6 +113,20 @@ figure_plan <- list(
   ),
 
   tar_target(
+    name = fig_total_biomass_treatment_precipitation,
+    command = {
+      ggplot(standing_biomass_22_wide, aes(x = fg_removed, y = total_biomass)) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = 0.12, alpha = 0.6) +
+        labs(
+          x = "Functional groups removed",
+          y = "Total biomass"
+        ) +
+        theme_classic() + facet_grid(~precipitation_level)
+    }
+  ),
+
+  tar_target(
     name = fig_B_temperature_contrast,
       command = ggplot(
         B_comp_contrasts_temperature,
