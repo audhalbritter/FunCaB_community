@@ -115,9 +115,8 @@ transformation_plan <- list(
         mutate(total_removed_biomass_ctrl_site = sum(mean_removed_biomass_ctrl_site)) |>
         ungroup()
 
-      # Join and calculate proportion
+      # Join and calculate proportion (include FGB so figures can show full-removal plots)
       removed_biomass |>
-        filter(fg_removed != "FGB") |>
         tidylog::left_join(control_biomass_site, by = c("siteID", "removed_fg", "fg_status")) |>
         mutate(prop_removed_biomass_trt = removed_biomass / total_removed_biomass_ctrl_site)
     }
@@ -206,22 +205,6 @@ transformation_plan <- list(
   ),
 
   # analysis data
-  # removed biomass long
-  tar_target(
-    name = removed_biomass_long,
-    command = standardised_removed_biomass_site |>
-      mutate(fg_status = "removed") |>
-      select(-fg_status)
-  ),
-
-  # removed biomass wide
-  tar_target(
-    name = removed_biomass_wide,
-    command = standardised_removed_biomass_site |>
-      mutate(fg_status = "removed") |>
-      select(-fg_status) |>
-      pivot_wider(names_from = removed_fg, values_from = prop_removed_biomass_trt, names_prefix = "rem_")
-  ),
 
   # 2022 biomass reshaped and wide
   tar_target(
