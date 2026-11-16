@@ -54,6 +54,7 @@ tar_target(
       mutate(
         estimate = round(estimate, 3),
         std.error = round(std.error, 3),
+        statistic = round(statistic, 3),
         conf.low = round(conf.low, 3),
         conf.high = round(conf.high, 3),
         p.value = round(p.value, 3)
@@ -173,6 +174,7 @@ tar_target(
       mutate(
         estimate = round(estimate, 3),
         std.error = round(std.error, 3),
+        statistic = round(statistic, 3),
         conf.low = round(conf.low, 3),
         conf.high = round(conf.high, 3),
         p.value = round(p.value, 3)
@@ -457,6 +459,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = round(p.value, 3)
@@ -739,6 +742,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = round(p.value, 3)
@@ -1020,6 +1024,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = case_when(
@@ -1227,6 +1232,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = case_when(
@@ -1403,6 +1409,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = case_when(
