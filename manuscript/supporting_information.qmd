@@ -17,11 +17,11 @@ library(tarchetypes)
 
 ## Biomass standardization figures
 
-Removed-biomass is the 2015 removal harvest, standardised to site-level full-removal (FGB) means.
+Removed-biomass is the 2015 removal harvest. The `none` category shows 2022 standing biomass in control plots (nothing removed).
 
 ```{r}
 #| label: fig-removed-biomass-stacked
-#| fig-cap: "Removed biomass in 2015 by functional group and treatment across the climate grid"
+#| fig-cap: "Removed biomass in 2015 by treatment, plus 2022 standing biomass in control plots (none), across the climate grid"
 #| echo: false
 #| warning: false
 #| message: false

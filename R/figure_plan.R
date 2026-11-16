@@ -20,19 +20,36 @@ figure_plan <- list(
   tar_target(
     name = fig_removed_biomass_stacked,
     command = {
-      standardised_removed_biomass_site %>%
-        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB"))) %>%
+      # 2015 removed biomass (all removal treatments including FGB)
+      removed_dat <- standardised_removed_biomass_site %>%
+        filter(fg_removed != "none") %>%
+        select(siteID, blockID, plotID, fg_removed, removed_fg, removed_biomass,
+               temperature_level, precipitation_level)
+
+      # 2022 standing biomass in control plots (nothing removed)
+      control_22 <- standing_biomass_22 %>%
+        filter(fg_removed == "none") %>%
+        transmute(
+          siteID, blockID, plotID,
+          fg_removed = "none",
+          removed_fg,
+          removed_biomass = biomass,
+          temperature_level, precipitation_level
+        )
+
+      bind_rows(control_22, removed_dat) %>%
+        mutate(fg_removed = factor(fg_removed, levels = c("none", "G", "F", "B", "GF", "GB", "FB", "FGB"))) %>%
         ggplot(aes(x = fg_removed, y = removed_biomass, fill = removed_fg)) +
         geom_col() +
         scale_fill_manual(
           values = c("G" = "green", "F" = "purple", "B" = "orange"),
-          name = "Removed FG"
+          name = "Functional group"
         ) +
         facet_grid(temperature_level ~ precipitation_level) +
         theme_bw() +
         labs(
           x = "Functional group removed",
-          y = "Removed biomass"
+          y = "Biomass"
         ) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
     }
@@ -42,7 +59,8 @@ figure_plan <- list(
     name = fig_prop_removed_biomass_stacked,
     command = {
       standardised_removed_biomass_site %>%
-        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB"))) %>%
+        filter(fg_removed != "none") %>%
+        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB", "FGB"))) %>%
         ggplot(aes(x = fg_removed, y = prop_removed_biomass_trt, fill = removed_fg)) +
         geom_col() +
         scale_fill_manual(
