@@ -35,18 +35,18 @@ transformation_plan <- list(
     }
   ),
 
-  # prep biomass
-  # Removed biomass (2015-2021)
+  # prep aboveground biomass
+  # Removed biomass (2015-2022)
   tar_target(
     name = biomass,
     command = removed_biomass_raw |>
       # Clean 2018 Ovstedalen duplicates
       clean_ovstedalen_2018_duplicates() |>
-      mutate(plotID = if_else(
-        treatment == "GF" & str_detect(plotID, "FG"),
-        str_replace(plotID, "FG", "GF"),
-        plotID
-      )) |>
+      mutate(
+        # standardise FG → GF in treatment and plotID
+        treatment = if_else(treatment == "FG", "GF", treatment),
+        plotID = if_else(str_detect(plotID, "FG"), str_replace(plotID, "FG", "GF"), plotID)
+      ) |>
       # remove extra plots in 2016
       filter(treatment != "XC") %>%
       # fix blockID
@@ -81,32 +81,25 @@ transformation_plan <- list(
       )
   ),
 
-  # prep standing biomass 2022 (contains remianing biomass)
+  # prep standing biomass 2022 (contains remaining biomass)
   tar_target(
     name = standing_biomass_22,
-    command = biomass_22 |>
+    command = biomass_22 |> 
+      # only keep remaining biomass and FGB (bare ground)
       filter(fg_status == "remaining" | fg_removed == "FGB") |>
       mutate(biomass = if_else(fg_removed == "FGB", 0, biomass)) |>
       mutate(fg_removed = factor(fg_removed,
              levels = c("none", "G", "F", "B", "GF", "GB", "FB", "FGB")))
   ),
 
-  # filter for biomass in 2015 (without XC)
+  # filter for biomass in 2015
   tar_target(
     name = removed_biomass,
     command = biomass |>
-      # remove mistakenly cut forb biomass from Ovs1B in 2019
-      # MADE A FUNCTION THAT REMOVES THIS. SHOULD REMOVED_FG == B ALSO BE REMOVED?
-      # filter(!(plotID == "Ovs1B" & removed_fg == "F")) |>
-      # add 2022 data (only removed biomass)
-      bind_rows(biomass_22 |>
-        filter(fg_status == "removed" | fg_removed == "none") |>
-        mutate(biomass = if_else(fg_removed == "none", 0, biomass))) |>
       filter(year == 2015) |>
       # sum biomass across the growing season
       group_by(siteID, blockID, plotID, fg_removed, removed_fg, fg_remaining, fg_richness, fg_status, temperature_level, precipitation_level, temperature_scaled, precipitation_scaled) |>
-      summarise(removed_biomass = sum(biomass)) |>
-      ungroup()
+      summarise(removed_biomass = sum(biomass), .groups = "drop")
   ),
 
   # standardised removed biomass by site
@@ -114,21 +107,18 @@ transformation_plan <- list(
     name = standardised_removed_biomass_site,
     command = {
       # Get control biomass per site and FG
-      control_biomass_site <- removed_biomass %>%
-        filter(fg_removed == "FGB") %>%
-        group_by(siteID, removed_fg, fg_status) %>%
-        summarise(
-          mean_removed_biomass_ctrl_site = mean(removed_biomass),
-          .groups = "drop"
-        ) %>%
-        group_by(siteID, fg_status) %>%
-        mutate(total_removed_biomass_ctrl_site = sum(mean_removed_biomass_ctrl_site)) %>%
+      control_biomass_site <- removed_biomass |>
+        filter(fg_removed == "FGB") |>
+        group_by(siteID, removed_fg, fg_status) |>
+        summarise(mean_removed_biomass_ctrl_site = mean(removed_biomass), .groups = "drop") |>
+        group_by(siteID, fg_status) |>
+        mutate(total_removed_biomass_ctrl_site = sum(mean_removed_biomass_ctrl_site)) |>
         ungroup()
 
       # Join and calculate proportion
-      removed_biomass %>%
-        filter(fg_removed != "FGB") %>%
-        tidylog::left_join(control_biomass_site, by = c("siteID", "removed_fg", "fg_status")) %>%
+      removed_biomass |>
+        filter(fg_removed != "FGB") |>
+        tidylog::left_join(control_biomass_site, by = c("siteID", "removed_fg", "fg_status")) |>
         mutate(prop_removed_biomass_trt = removed_biomass / total_removed_biomass_ctrl_site)
     }
   ),
@@ -137,7 +127,7 @@ transformation_plan <- list(
   # make community data, impute missing cover values, construct FG cover coefficients
   tar_target(
     name = community,
-    command = fg_cleaning(community_raw, gridded_climate, species_corrections_raw) %>%
+    command = fg_cleaning(community_raw, gridded_climate, species_corrections_raw) |>
       make_fg_cover_coefficients()
   ),
 
