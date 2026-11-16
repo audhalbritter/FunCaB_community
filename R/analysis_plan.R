@@ -14,17 +14,20 @@ analysis_plan <- list(
         tidylog::summarise(standing_biomass = sum(biomass), .groups = "drop")
 
       # compare full vs 2-way model
-      results <- compare_full_vs_2way_lmer(
+      results <- compare_full_vs_2way_glmmTMB(
         data = dat,
         response = "standing_biomass",
         predictor = "fg_richness"
       )
     }
   ),
+
+  # tidy richness model results
   tar_target(
     name = fg_richness_tidy,
     command = clean_model_terms(tidy_model(fg_richness_analysis$model_2way))
   ),
+
 
 # Effect of factorial functional group removal on total standing biomass
 tar_target(
@@ -1571,7 +1574,7 @@ tar_target(
     command = {
       split_data <- split(standing_biomass_by_focal_fg, standing_biomass_by_focal_fg$focal_fg)
       purrr::imap(split_data, function(dat, fg) {
-        compare_full_vs_2way_lmer(
+        compare_full_vs_2way_glmmTMB(
           data = dat,
           response = "standing_biomass",
           predictor = "fg_richness"

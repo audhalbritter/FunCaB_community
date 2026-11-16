@@ -1,12 +1,13 @@
 ### Functions for mixed effects modeling
 
 #' Compare full 3-way interaction model to 2-way interaction model using LRT
+#' Fits Gaussian glmmTMB models with nested random effects by default.
 #' @param data Data frame
 #' @param response Name of response variable (string)
 #' @param predictor Name of main predictor (string)
-#' @param random_effect Name of random effect grouping variable (string, default 'siteID')
+#' @param random_effect Random effect term (string, default 'siteID/blockID')
 #' @return List with both models and the anova table
-compare_full_vs_2way_lmer <- function(data, response, predictor, random_effect = "siteID") {
+compare_full_vs_2way_glmmTMB <- function(data, response, predictor, random_effect = "siteID/blockID") {
   # Build formula strings
   # Full model: response ~ predictor * precipitation_scaled * temperature_scaled + (1|random_effect)
   full_formula <- as.formula(
@@ -17,19 +18,25 @@ compare_full_vs_2way_lmer <- function(data, response, predictor, random_effect =
     paste0(response, " ~ ", predictor, " + precipitation_scaled + temperature_scaled + ",
            predictor, ":precipitation_scaled + ", predictor, ":temperature_scaled + precipitation_scaled:temperature_scaled + (1|", random_effect, ")")
   )
-  # Fit models
-  model_full <- lmerTest::lmer(full_formula, data = data)
-  model_2way <- lmerTest::lmer(twoway_formula, data = data)
+  # Fit Gaussian glmmTMB models
+  model_full <- glmmTMB::glmmTMB(full_formula, data = data)
+  model_2way <- glmmTMB::glmmTMB(twoway_formula, data = data)
   # Likelihood ratio test
   lrt <- anova(model_2way, model_full)
   return(list(model_2way = model_2way, model_full = model_full, lrt = lrt))
 }
 
-#' Tidy a model object using broom::tidy
-#' @param model A model object (e.g., from lmerTest::lmer or lm)
+#' @rdname compare_full_vs_2way_glmmTMB
+#' @export
+compare_full_vs_2way_lmer <- function(...) {
+  compare_full_vs_2way_glmmTMB(...)
+}
+
+#' Tidy a model object using broom.mixed::tidy
+#' @param model A model object (e.g., from glmmTMB, lmerTest::lmer, or lm)
 #' @return A tidy data frame of model results
 tidy_model <- function(model) {
-  broom::tidy(model)
+  broom.mixed::tidy(model)
 }
 
 #' Run model diagnostics using performance::check_model

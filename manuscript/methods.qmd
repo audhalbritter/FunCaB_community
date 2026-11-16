@@ -35,13 +35,15 @@ Above ground biomass was collected annually from all experimental plots. The bio
 
 In 2022, the whole experiment was harvested and the above ground biomass from all plant functional groups in all plots was removed. The biomass was also dried at 60°C and weighed. The biomass from the plant functional groups from the removal treatments is hereafter called *removed biomass*. And the biomass from the remaining plant functional groups is hereafter called *standing biomass*.
 
+#### Belowground biomass?
+
 #### Plant Community Composition
 
 Plant community composition recorded annually between 2015 and 2019 across all experimental plots. We recorded the presence and visually estimated the cover of each species per plot.
 
 ### Data preparation
 
-**Biomass standardization (not used!):** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
+**Biomass standardization:** For both biomass harvests in 2015 and in 2022, biomass was standardised to the site level for each functional group removed in each treatment plot. To standardise the biomass removed in 2015, we subtracted the biomass of each functional group in each treatment plot from the mean functional group biomass in the full removal treatment plots at each site. We conducted a similar standardisation for the remaining biomass of the focal functional groups in 2022, instead using the mean site-level biomass of the control plots.
 
 ### Analysis
 
@@ -91,16 +93,18 @@ standing_biomass_22_wide |>
   )
 ```
 
-PART 1: run models across all data. Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran lmer with standing biomass as response and fg, plus temperature and precipitation as predictors. Site was used as random effect. Temperature and precipitation were scaled.
+**PART 1: Community analysis**
 
-**Functional group richness and identity:** compare full model with 2-way interaction model
+Test how the number of removed functional groups, identity of removed groups, or cumulative removed biomass of each functional group affected standing biomass. We ran Gaussian glmmTMB models with standing biomass as response and fg, plus temperature and precipitation as predictors. Block nested within site (`1|siteID/blockID`) was used as random effect. Temperature and precipitation were scaled.
 
-*Full model*: standing biomass \~ fg_richness \* precipitation_scaled \* temperature_scaled + (1\|siteID)
+**Functional group richness:** compare full model with 2-way interaction model
 
-*2-way model*: standing biomass \~ fg_richness + precipitation_scaled + temperature_scaled + fg_richness:precipitation_scaled + fg_richness:temperature_scaled + precipitation_scaled:temperature_scaled + (1\|siteID)
+*Full model*: standing biomass \~ fg_richness \* precipitation_scaled \* temperature_scaled + (1\|siteID/blockID)
+
+*2-way model*: standing biomass \~ fg_richness + precipitation_scaled + temperature_scaled + fg_richness:precipitation_scaled + fg_richness:temperature_scaled + precipitation_scaled:temperature_scaled + (1\|siteID/blockID)
 
 **Factorial functional group:** only 2-way interactions
 
-glmmTMB( total_biomass \~ (G_treat + F_treat + B_treat)\^2 + temperature_scaled \* precipitation_scaled + (G_treat + F_treat + B_treat):(temperature_scaled + precipitation_scaled) + (1 \| siteID/blockID)
+glmmTMB(total_biomass \~ G_treat:F_treat + G_treat:B_treat + F_treat:B_treat + T \* P + G_treat \* T + G_treat \* P + F_treat \* T + F_treat \* P + B_treat \* T + B_treat \* P + (1 \| siteID/blockID)
 
-PART 2: Biomass compensation within each remaining functional group
+**PART 2: Functional group analysis**
