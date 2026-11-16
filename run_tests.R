@@ -93,6 +93,7 @@ run_function_tests <- function(function_name) {
   
   # Map function names to test files
   function_tests <- list(
+    "compare_full_vs_2way_glmmTMB" = "tests/test_compare_full_vs_2way_lmer.R",
     "compare_full_vs_2way_lmer" = "tests/test_compare_full_vs_2way_lmer.R",
     "removed_biomass_raw" = "tests/test_removed_biomass_raw.R",
     "removed_biomass_final_raw" = "tests/test_removed_biomass_final_raw.R"

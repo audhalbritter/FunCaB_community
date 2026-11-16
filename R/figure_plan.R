@@ -7,38 +7,6 @@ figure_plan <- list(
     command = plot_model_effects(fg_richness_analysis$model_2way)
   ),
 
-# functional group identity
-  tar_target(
-    name = fig_fg_identity_effects,
-    command = plot_model_effects(fg_identity_analysis$model_2way)
-  ),
-
-  tar_target(
-    name = fig_fg_identity_interactions,
-    command = {
-      p1 <- plot_model(fg_identity_analysis$model_2way, type = "pred", terms = c("precipitation_scaled", "fg_removed"))
-      p2 <- plot_model(fg_identity_analysis$model_2way, type = "pred", terms = c("temperature_scaled", "fg_removed"))
-
-      p1 + p2 + plot_layout(guides = "collect") & theme_bw()
-    }
-  ),
-
-  # tar_target(
-  #   name = fig_fg_biomass_effects,
-  #   command = plot_model_effects(fg_biomass_analysis)
-  # ),
-
-  # tar_target(
-  #   name = fig_fg_biomass_interactions,
-  #   command = {
-  #     p1 <- plot_model(fg_biomass_analysis, type = "pred", terms = c("cumulative_removed_biomass", "fg_removed"))
-  #     p2 <- plot_model(fg_biomass_analysis, type = "pred", terms = c("temperature_scaled", "fg_removed"))
-  #     p3 <- plot_model(fg_biomass_analysis, type = "pred", terms = c("precipitation_scaled", "fg_removed"))
-
-  #     p1 + p2 + p3 + plot_layout(guides = "collect") & theme_bw()
-  #   }
-  # ),
-
   ## Part 2
 
   # fg richness focals
@@ -49,61 +17,39 @@ figure_plan <- list(
                                       term_order = rev(c("fg_richness", "T", "P", "fg_richness:T", "fg_richness:P", "P:T")))
   ),
 
-  # fg identity focals
-  tar_target(
-    name = fig_fg_identity_focal_effects,
-    command = plot_tidy_effects_facet(data = fg_identity_focal_tidy,
-                                      facet_var = "focal_fg")
-  ),
-
-    tar_target(
-    name = fig_fg_identity_focal_interactions,
-    command = {
-      p1 <- plot_model(fg_identity_focal_analysis$bryophytes$model_2way,
-        type = "pred",
-        terms = c("precipitation_scaled", "fg_removed"),
-        title = "Bryophytes")
-      p2 <- plot_model(fg_identity_focal_analysis$forbs$model_2way,
-        type = "pred",
-        terms = c("precipitation_scaled", "fg_removed"),
-        title = "Forbs")
-      p3 <- plot_model(fg_identity_focal_analysis$graminoids$model_2way,
-        type = "pred",
-        terms = c("precipitation_scaled", "fg_removed"),
-        title = "Graminoids")
-      p4 <- plot_model(fg_identity_focal_analysis$bryophytes$model_2way,
-        type = "pred",
-        terms = c("temperature_scaled", "fg_removed"),
-        title = "Bryophytes")
-      p5 <- plot_model(fg_identity_focal_analysis$forbs$model_2way,
-        type = "pred",
-        terms = c("temperature_scaled", "fg_removed"),
-        title = "Forbs")
-      p6 <- plot_model(fg_identity_focal_analysis$graminoids$model_2way,
-        type = "pred",
-        terms = c("temperature_scaled", "fg_removed"),
-        title = "Graminoids")
-
-      (p1 + p2 + p3) / (p4 + p5 + p6) + plot_layout(guides = "collect") & theme_bw()
-    }
-  ),
-
   tar_target(
     name = fig_removed_biomass_stacked,
     command = {
-      standardised_removed_biomass_site %>%
-        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB"))) %>%
+      # 2015 removed biomass (all removal treatments including FGB)
+      removed_dat <- standardised_removed_biomass_site %>%
+        filter(fg_removed != "none") %>%
+        select(siteID, blockID, plotID, fg_removed, removed_fg, removed_biomass,
+               temperature_level, precipitation_level)
+
+      # 2022 standing biomass in control plots (nothing removed)
+      control_22 <- standing_biomass_22 %>%
+        filter(fg_removed == "none") %>%
+        transmute(
+          siteID, blockID, plotID,
+          fg_removed = "none",
+          removed_fg,
+          removed_biomass = biomass,
+          temperature_level, precipitation_level
+        )
+
+      bind_rows(control_22, removed_dat) %>%
+        mutate(fg_removed = factor(fg_removed, levels = c("none", "G", "F", "B", "GF", "GB", "FB", "FGB"))) %>%
         ggplot(aes(x = fg_removed, y = removed_biomass, fill = removed_fg)) +
         geom_col() +
         scale_fill_manual(
           values = c("G" = "green", "F" = "purple", "B" = "orange"),
-          name = "Removed FG"
+          name = "Functional group"
         ) +
         facet_grid(temperature_level ~ precipitation_level) +
         theme_bw() +
         labs(
           x = "Functional group removed",
-          y = "Removed biomass"
+          y = "Biomass"
         ) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
     }
@@ -113,7 +59,8 @@ figure_plan <- list(
     name = fig_prop_removed_biomass_stacked,
     command = {
       standardised_removed_biomass_site %>%
-        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB"))) %>%
+        filter(fg_removed != "none") %>%
+        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB", "FGB"))) %>%
         ggplot(aes(x = fg_removed, y = prop_removed_biomass_trt, fill = removed_fg)) +
         geom_col() +
         scale_fill_manual(
@@ -125,27 +72,6 @@ figure_plan <- list(
         labs(
           x = "Functional group removed",
           y = "Proportion removed biomass"
-        ) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    }
-  ),
-
-  tar_target(
-    name = fig_standing_biomass_stacked,
-    command = {
-      standardised_standing_biomass %>%
-        mutate(fg_removed = factor(fg_removed, levels = c("G", "F", "B", "GF", "GB", "FB"))) %>%
-        ggplot(aes(x = fg_removed, y = biomass, fill = removed_fg)) +
-        geom_col() +
-        scale_fill_manual(
-          values = c("G" = "green", "F" = "purple", "B" = "orange"),
-          name = "Functional group"
-        ) +
-        facet_grid(temperature_level ~ precipitation_level) +
-        theme_bw() +
-        labs(
-          x = "Functional group removed",
-          y = "Standing biomass"
         ) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
     }
@@ -201,6 +127,20 @@ figure_plan <- list(
           y = "Total biomass"
         ) +
         theme_classic() + facet_grid(~temperature_level)
+    }
+  ),
+
+  tar_target(
+    name = fig_total_biomass_treatment_precipitation,
+    command = {
+      ggplot(standing_biomass_22_wide, aes(x = fg_removed, y = total_biomass)) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = 0.12, alpha = 0.6) +
+        labs(
+          x = "Functional groups removed",
+          y = "Total biomass"
+        ) +
+        theme_classic() + facet_grid(~precipitation_level)
     }
   ),
 

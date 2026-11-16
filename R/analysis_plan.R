@@ -14,36 +14,20 @@ analysis_plan <- list(
         tidylog::summarise(standing_biomass = sum(biomass), .groups = "drop")
 
       # compare full vs 2-way model
-      results <- compare_full_vs_2way_lmer(
+      results <- compare_full_vs_2way_glmmTMB(
         data = dat,
         response = "standing_biomass",
         predictor = "fg_richness"
       )
     }
   ),
+
+  # tidy richness model results
   tar_target(
     name = fg_richness_tidy,
     command = clean_model_terms(tidy_model(fg_richness_analysis$model_2way))
   ),
 
-  # functional group identity
-  tar_target(
-    name = fg_identity_analysis,
-    command = {
-      # compare full vs 2-way model
-      results <- compare_full_vs_2way_lmer(
-        data = standing_biomass_22,
-        response = "biomass",
-        # should this be fg_removed x fg_richness. Or should it be identity (fg_removed) x removed_fg?
-        predictor = "fg_removed"
-      )
-    }
-  ),
-
-  tar_target(
-    name = fg_identity_tidy,
-    command = clean_model_terms(tidy_model(fg_identity_analysis$model_2way))
-  ),
 
 # Effect of factorial functional group removal on total standing biomass
 tar_target(
@@ -70,6 +54,7 @@ tar_target(
       mutate(
         estimate = round(estimate, 3),
         std.error = round(std.error, 3),
+        statistic = round(statistic, 3),
         conf.low = round(conf.low, 3),
         conf.high = round(conf.high, 3),
         p.value = round(p.value, 3)
@@ -189,6 +174,7 @@ tar_target(
       mutate(
         estimate = round(estimate, 3),
         std.error = round(std.error, 3),
+        statistic = round(statistic, 3),
         conf.low = round(conf.low, 3),
         conf.high = round(conf.high, 3),
         p.value = round(p.value, 3)
@@ -473,6 +459,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = round(p.value, 3)
@@ -755,6 +742,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = round(p.value, 3)
@@ -1036,6 +1024,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = case_when(
@@ -1243,6 +1232,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = case_when(
@@ -1419,6 +1409,7 @@ tar_target(
     mutate(
       estimate = round(estimate, 3),
       std.error = round(std.error, 3),
+      statistic = round(statistic, 3),
       conf.low = round(conf.low, 3),
       conf.high = round(conf.high, 3),
       p.value = case_when(
@@ -1590,7 +1581,7 @@ tar_target(
     command = {
       split_data <- split(standing_biomass_by_focal_fg, standing_biomass_by_focal_fg$focal_fg)
       purrr::imap(split_data, function(dat, fg) {
-        compare_full_vs_2way_lmer(
+        compare_full_vs_2way_glmmTMB(
           data = dat,
           response = "standing_biomass",
           predictor = "fg_richness"
@@ -1607,191 +1598,6 @@ tar_target(
           dplyr::mutate(focal_fg = fg)
       })
     }
-  ),
-
-  # functional group identity by focal group (graminoids, forbs, bryophytes)
-  tar_target(
-    name = fg_identity_focal_analysis,
-    command = {
-      split_data <- split(standing_biomass_by_focal_fg, standing_biomass_by_focal_fg$focal_fg)
-      purrr::imap(split_data, function(dat, fg) {
-        compare_full_vs_2way_lmer(
-          data = dat,
-          response = "standing_biomass",
-          predictor = "fg_removed"
-        )
-      })
-    }
-  ),
-
-  tar_target(
-    name = fg_identity_focal_tidy,
-    command = {
-      purrr::imap_dfr(fg_identity_focal_analysis, function(res, fg) {
-        clean_model_terms(tidy_model(res$model_2way)) %>%
-          dplyr::mutate(focal_fg = fg)
-      })
-    }
-  ),
-
-
-  # 1. Effect of remaining/removed biomass on biomass of focal PFG
-  # Single FG presence:
-  #  g ~ b crb * f crb
-  #  b ~ g crb * f crb
-  #  f ~ b crb * g crb
-
-  # stepwise model removal
-
-  # tar_target(
-  #   name = single_fg_model,
-  #   command = {
-  #     G_only <- prepare_model_data(
-  #       data = analysis_data,
-  #       fg_present = "G",
-  #       fg_name = "graminoids"
-  #     )
-
-  #     # fit the model:
-  #     # sb G ~ crb_B + crb_F + precip + crb_B:precip + crb_F:precip + year + (1 | siteID)
-  #     result <- fit_scaled_mixed_model(
-  #       data = G_only,
-  #       fixed_formula = delta_biomass ~ crb_B + crb_F + precipitation + year,
-  #       model_formula = delta_biomass ~ crb_B + crb_F + precipitation + crb_B:precipitation + crb_F:precipitation + year,
-  #       grouping_var = c("siteID", "crb_B", "crb_F")
-  #     )
-  #     # summary(result$model)
-  #     # result$scaled_data
-  #     # result$original_data
-
-  #     # result <- fit_lmer_with_drop1(
-  #     #   data = G_only,
-  #     #   response = "delta_biomass",
-  #     #   predictors = c("crb_B", "crb_F", "precipitation"),
-  #     #   random_effect = "siteID",
-  #     #   add_fixed = "year"
-  #     #   )
-
-  #     # # plot_model(result$model)
-  #     # # plot_model(result$model, type = "pred", terms = c("precipitation", "crb_"))
-
-  #     # F_only <- prepare_model_data(
-  #     #   data = analysis_data,
-  #     #   fg_present = "F",
-  #     #   fg_name = "forbs"
-  #     # )
-
-  #     # result <- fit_scaled_mixed_model(
-  #     #   data = F_only,
-  #     #   fixed_formula = delta_biomass ~ crb_B + crb_G + precipitation + year,
-  #     #   model_formula = delta_biomass ~ crb_B + crb_G + precipitation + crb_B:precipitation + crb_G:precipitation + year,
-  #     #   grouping_var = c("siteID", "crb_B", "crb_G")
-  #     # )
-
-  #     # B_only <- prepare_model_data(
-  #     #   data = analysis_data,
-  #     #   fg_present = "B",
-  #     #   fg_name = "bryophytes"
-  #     # )
-
-  #     # result <- fit_scaled_mixed_model(
-  #     #   data = B_only,
-  #     #   fixed_formula = delta_biomass ~ crb_G + crb_F + precipitation + year,
-  #     #   model_formula = delta_biomass ~ crb_G * crb_F * precipitation + crb_G:precipitation + crb_F:precipitation + year,
-  #     #   grouping_var = c("siteID", "crb_G", "crb_F")
-  #     # )
-
-  #   }
-  # ),
-
-  tar_target(
-    name = fg_biomass_analysis,
-    command = {
-      joined_dat <- sb_long |>
-      tidylog::left_join(removed_biomass_long, by = c("siteID", "blockID", "plotID", "fg_removed", "fg_remaining", "fg_richness", "temperature_level", "precipitation_level", "temperature_scaled", "precipitation_scaled")) |>
-        mutate(combined_fg_trt = paste(fg_removed, removed_fg, sep = "_"))
-
-      fit_mod <- lmerTest::lmer(standing_biomass ~ 0 + prop_removed_biomass_trt + removed_fg + (1|siteID), data = joined_dat)
-      summary(fit_mod)
-
-      fit_mod <- lmerTest::lmer(standing_biomass ~ 0 + prop_removed_biomass_trt*removed_fg*fg_removed + (1|siteID), data = joined_dat)
-      summary(fit_mod)
-            # maybe we want this to be a zero-intercept model. At the moment this compares to bryophytes, which is #not so interesting.
-
-}
-),
-
-tar_target(
-    name = single_fg_biomass_analysis,
-    command = {
-      joined_dat <- sb_long |>
-      tidylog::left_join(removed_biomass_long, by = c("siteID", "blockID", "plotID", "fg_removed", "fg_remaining", "fg_richness", "temperature_level", "precipitation_level", "temperature_scaled", "precipitation_scaled")) |>
-        mutate(combined_fg_trt = paste(fg_removed, removed_fg, sep = "_"))
-
-      # Function to fit models with error handling
-      fit_single_fg_model <- function(data, formula) {
-        # Check if we have enough levels for factors
-        if (n_distinct(data$fg_removed) < 2) {
-          return(NULL)  # Skip if not enough levels
-        }
-        tryCatch({
-          lmerTest::lmer(as.formula(formula), data = data)
-        }, error = function(e) {
-          message(paste("Model failed:", e$message))
-          return(NULL)
-        })
-      }
-
-      # Create model combinations
-      model_combinations <- expand_grid(
-        fg_remaining = c("F", "G", "B"),
-        removed_fg = c("F", "G", "B"),
-        env_var = c("temperature_scaled", "precipitation_scaled")
-      ) %>%
-        # Filter to valid combinations (remaining != removed)
-        filter(fg_remaining != removed_fg) %>%
-        # Create model formulas
-        mutate(
-          model_formula = case_when(
-            env_var == "temperature_scaled" ~ "standing_biomass ~ prop_removed_biomass_trt * fg_removed * temperature_scaled + (1|siteID)",
-            env_var == "precipitation_scaled" ~ "standing_biomass ~ prop_removed_biomass_trt * fg_removed * precipitation_scaled + (1|siteID)"
-          )
-        )
-
-      # Fit models for each combination
-      single_fg_models <- model_combinations %>%
-        rowwise() %>%
-        mutate(
-          # Filter data for this combination
-          model_data = list(
-            joined_dat %>%
-              filter(fg_remaining == .data$fg_remaining, removed_fg == .data$removed_fg)
-          )
-        ) %>%
-        ungroup() %>%
-        mutate(
-          n_obs = map_int(model_data, nrow),
-          # Fit model if we have enough data
-          model = map2(model_data, model_formula, ~ {
-            if (.y >= 10) {  # Minimum sample size check
-              fit_single_fg_model(.x, .y)
-            } else {
-              NULL
-            }
-          })
-        ) %>%
-        # Add model summaries for successful models
-        mutate(
-          model_summary = map(model, ~ if (!is.null(.x)) broom::tidy(.x) else NULL),
-          model_anova = map(model, ~ if (!is.null(.x)) anova(.x) else NULL)
-        ) %>%
-        # Remove failed models
-        filter(!map_lgl(model, is.null))
-
-      # Return the results
-      single_fg_models
-
-}
-)
+  )
 
 )
