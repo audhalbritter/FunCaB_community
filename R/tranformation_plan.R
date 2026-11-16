@@ -1,6 +1,5 @@
 # data curation plan
 transformation_plan <- list(
-
   # mean climate
   tar_target(
     name = gridded_climate,
@@ -15,7 +14,7 @@ transformation_plan <- list(
 
       left_join(
         dat |>
-        # annual precipitation
+          # annual precipitation
           group_by(year, siteID) |>
           summarise(precipitation = sum(precipitation, na.rm = TRUE)) |>
           ungroup() |>
@@ -84,12 +83,13 @@ transformation_plan <- list(
   # prep standing biomass 2022 (contains remaining biomass)
   tar_target(
     name = standing_biomass_22,
-    command = biomass_22 |> 
+    command = biomass_22 |>
       # only keep remaining biomass and FGB (bare ground)
       filter(fg_status == "remaining" | fg_removed == "FGB") |>
       mutate(biomass = if_else(fg_removed == "FGB", 0, biomass)) |>
       mutate(fg_removed = factor(fg_removed,
-             levels = c("none", "G", "F", "B", "GF", "GB", "FB", "FGB")))
+        levels = c("none", "G", "F", "B", "GF", "GB", "FB", "FGB")
+      ))
   ),
 
   # filter for biomass in 2015
@@ -140,8 +140,6 @@ transformation_plan <- list(
       filter(fg_removed != "XC") |>
       select(year:fg_removed, species, cover, functional_group, temperature_level:fg_remaining)
   ),
-
-
   tar_target(
     name = fg_cover,
     command = community |>
@@ -162,7 +160,6 @@ transformation_plan <- list(
     name = diversity,
     command = calc_diversity(cover_data)
   ),
-
   tar_target(
     name = traits,
     command = traits_raw |>
@@ -209,22 +206,22 @@ transformation_plan <- list(
   ),
 
   # analysis data
-    # removed biomass long
-    tar_target(
-      name = removed_biomass_long,
-      command = standardised_removed_biomass_site |>
-        mutate(fg_status = "removed") |>
-        select(-fg_status)
-    ),
+  # removed biomass long
+  tar_target(
+    name = removed_biomass_long,
+    command = standardised_removed_biomass_site |>
+      mutate(fg_status = "removed") |>
+      select(-fg_status)
+  ),
 
-    # removed biomass wide
-    tar_target(
-      name = removed_biomass_wide,
-      command = standardised_removed_biomass_site |>
-        mutate(fg_status = "removed") |>
-        select(-fg_status) |>
-        pivot_wider(names_from = removed_fg, values_from = prop_removed_biomass_trt, names_prefix = "rem_")
-    ),
+  # removed biomass wide
+  tar_target(
+    name = removed_biomass_wide,
+    command = standardised_removed_biomass_site |>
+      mutate(fg_status = "removed") |>
+      select(-fg_status) |>
+      pivot_wider(names_from = removed_fg, values_from = prop_removed_biomass_trt, names_prefix = "rem_")
+  ),
 
   # 2022 biomass reshaped and wide
   tar_target(
@@ -234,20 +231,21 @@ transformation_plan <- list(
       mutate(
         B_treat = as.integer(str_detect(fg_removed, stringr::fixed("B"))),
         G_treat = as.integer(str_detect(fg_removed, stringr::fixed("G"))),
-        F_treat = as.integer(str_detect(fg_removed, stringr::fixed("F")))) |>
+        F_treat = as.integer(str_detect(fg_removed, stringr::fixed("F")))
+      ) |>
       group_by(plotID) |>
-      mutate(total_biomass = sum(F,G,B)) |>
+      mutate(total_biomass = sum(F, G, B)) |>
       ungroup() |>
       tidylog::filter(fg_removed != "FGB")
   ),
-
   tar_target(
     name = standing_biomass_22_cover_15,
     command = standing_biomass_22_wide |>
       tidylog::left_join(fg_cover |> filter(year == 2015) |> select(siteID, blockID, total_graminoids, total_forbs, total_bryophytes)) |>
-      rename(G_cover = total_graminoids,
-             F_cover = total_forbs,
-             B_cover = total_bryophytes)
+      rename(
+        G_cover = total_graminoids,
+        F_cover = total_forbs,
+        B_cover = total_bryophytes
+      )
   )
-
 )
