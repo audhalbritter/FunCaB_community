@@ -5,24 +5,24 @@ download_plan <- list(
 
   # biomass data
   # biomass 2015-2021
-    tar_target(
-    name = removed_biomass_download,
-    command =  get_file(node = "4c5v2",
-                        file = "FunCaB_clean_biomass_2015-2021.csv",
-                        path = "data",
-                        remote_path = "1_Biomass_removal"),
-  format = "file"
-  ),
+  #   tar_target(
+  #   name = removed_biomass_download,
+  #   command =  get_file(node = "4c5v2",
+  #                       file = "FunCaB_clean_biomass_2015-2021.csv",
+  #                       path = "data",
+  #                       remote_path = "1_Biomass_removal"),
+  # format = "file"
+  # ),
 
-  # biomass 2022
-  tar_target(
-    name = removed_biomass_final_download,
-    command =  get_file(node = "tx9r2",
-                        file = "FUNDER_clean_standing_biomass_2022.csv",
-                        path = "data",
-                        remote_path = "1_Vegetation/Clean_data"),
-  format = "file"
-  ),
+  # # biomass 2022
+  # tar_target(
+  #   name = removed_biomass_final_download,
+  #   command =  get_file(node = "tx9r2",
+  #                       file = "FUNDER_clean_standing_biomass_2022.csv",
+  #                       path = "data",
+  #                       remote_path = "1_Vegetation/Clean_data"),
+  # format = "file"
+  # ),
 
   # community composition
   tar_target(
@@ -68,18 +68,30 @@ download_plan <- list(
   # biomass
   tar_target(
     name = removed_biomass_raw,
-    command =  read_csv(removed_biomass_download)
+    command =  read_csv(here::here("data/i_FUNDER_clean_biomass_removal_2015-2022.csv"))
   ),
     # 2022
     tar_target(
     name = removed_biomass_final_raw,
-    command =  read_csv(removed_biomass_final_download)
+    command =  read_csv(here::here("data/i_FUNDER_clean_standing_biomass_2022.csv"))
   ),
+
+  # belowground biomass
+    tar_target(
+      name = belowground_biomass_raw,
+      command =  read_csv(here::here("data/ii_FUNDER_clean_root_biomass_productivity_traits_2021-2022.csv"))
+    ),
 
   # community composition
   tar_target(
     name = community_raw,
     command =  read_csv(community_download)
+  ),
+
+    # community composition 2022
+  tar_target(
+    name = community22_raw,
+    command =  read_csv(here::here("data/iv_FUNDER_clean_community_2015-2022.csv"))
   ),
 
     # species corrections
@@ -100,4 +112,3 @@ download_plan <- list(
       command =  read_csv(gridded_climate_download)
     )
 )
-
