@@ -212,7 +212,8 @@ transformation_plan <- list(
   # bootstrapping for CWM
   tar_target(
     name = trait_means,
-    command = make_bootstrapping(imputed_traits)
+    command = make_bootstrapping(imputed_traits) %>%
+      make_fancy_data(., gridded_climate, fix_treatment = FALSE)
   ),
 
   # analysis data
