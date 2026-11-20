@@ -154,6 +154,17 @@ transformation_plan <- list(
   ),
 
 
+  # root biomass
+  tar_target(name = root_biomass,
+             command = belowground_biomass_raw %>%
+               # convert to Funder format
+               funcabization(., convert_to = "Funder") %>%
+               make_fancy_data(., gridded_climate, fix_treatment = TRUE) |>
+               filter(trait == "root_biomass") |>
+               rename(root_biomass = value)
+             ),
+
+
   # calculate diversity metrics
   tar_target(
     name = diversity,
@@ -201,7 +212,8 @@ transformation_plan <- list(
   # bootstrapping for CWM
   tar_target(
     name = trait_means,
-    command = make_bootstrapping(imputed_traits)
+    command = make_bootstrapping(imputed_traits) %>%
+      make_fancy_data(., gridded_climate, fix_treatment = FALSE)
   ),
 
   # analysis data
@@ -221,14 +233,16 @@ transformation_plan <- list(
       ungroup() |>
       tidylog::filter(fg_removed != "FGB")
   ),
+
   tar_target(
-    name = standing_biomass_22_cover_15,
+    name = standing_biomass_22_cover_15, #standing_biomass_22_cover_15_root,
     command = standing_biomass_22_wide |>
-      tidylog::left_join(fg_cover |> filter(year == 2015) |> select(siteID, blockID, total_graminoids, total_forbs, total_bryophytes)) |>
+      tidylog::full_join(fg_cover |> filter(year == 2015, fg_removed != "FGB") |> select(siteID, blockID, plotID, total_graminoids, total_forbs, total_bryophytes), by = c("siteID", "blockID", "plotID")) |> # there are three plots missing from the biomass data: Ulv1B, Skj4C, Fau2GB
       rename(
         G_cover = total_graminoids,
         F_cover = total_forbs,
         B_cover = total_bryophytes
-      )
+      ) #|>
+      #tidylog::left_join(root_biomass |> select(siteID, blockID, fg_removed, root_biomass))
   )
 )

@@ -145,6 +145,43 @@ figure_plan <- list(
   ),
 
   tar_target(
+    name = fig_fg_biomass_treatment_temperature,
+    command = {
+      standing_biomass_22 |>
+        filter(fg_removed != "FGB") |>
+        ggplot(aes(x = fg_removed, y = biomass, colour = removed_fg)) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = 0.12, alpha = 0.6) +
+        labs(
+          x = "Functional groups removed",
+          y = "Total biomass"
+        ) +
+        scale_color_brewer(palette = "Set2") +
+        theme_classic() +
+        facet_grid(~temperature_level)
+    }
+  ),
+
+    tar_target(
+    name = fig_fg_biomass_treatment_precipitation,
+    command = {
+      standing_biomass_22 |>
+        filter(fg_removed != "FGB") |>
+        ggplot(aes(x = fg_removed, y = biomass, colour = removed_fg)) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = 0.12, alpha = 0.6) +
+        labs(
+          x = "Functional groups removed",
+          y = "Total biomass"
+        ) +
+        scale_color_brewer(palette = "Set2") +
+        theme_classic() +
+        facet_grid(~precipitation_level)
+    }
+  ),
+
+
+  tar_target(
     name = fig_B_temperature_contrast,
       command = ggplot(
         B_comp_contrasts_temperature,

@@ -46,15 +46,15 @@ pretty_model_table(fg_richness_tidy)
 
 ### Functional group removed (factorial)
 
--   Total standing biomass decreases when graminoids in combination with forbs or bryophytes are removed. There is a trend for F:B.
+- Total standing biomass decreases when graminoids in combination with forbs or bryophytes are removed. There is a trend for F:B.
 
--   Biomass also decreases in wetter places when bryophytes are removed.
+- Biomass also decreases in wetter places when bryophytes are removed.
 
--   Contrasts show that when bryophytes or more than two functional groups are removed, total biomass decreases.
+- Contrasts show that when bryophytes or more than two functional groups are removed, total biomass decreases.
 
 ```{r}
-#| label: fig-results-total-biomass
-#| fig-cap: "Total standing biomass per functional group removed along temperature gradients."
+#| label: fig-results-total-biomass-temperature
+#| fig-cap: "Total standing biomass removed along the temperature gradient."
 #| echo: false
 #| warning: false
 #| message: false
@@ -66,7 +66,7 @@ tar_read(fig_total_biomass_treatment_temperature)
 
 ```{r}
 #| label: fig-results-total-biomass-precipitation
-#| fig-cap: "Total standing biomass per functional group removed along precipitation gradients."
+#| fig-cap: "Total standing biomass removed along precipitation gradients."
 #| echo: false
 #| warning: false
 #| message: false
@@ -74,6 +74,28 @@ tar_read(fig_total_biomass_treatment_temperature)
 # load in figure
 tar_read(fig_total_biomass_treatment_precipitation)
 
+```
+
+```{r}
+#| label: fig-results-fg-biomass-temperature
+#| fig-cap: "Total standing biomass per functional group removed along the temperature gradient."
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in figure
+tar_read(fig_fg_biomass_treatment_temperature)
+```
+
+```{r}
+#| label: fig-results-fg-biomass-precipitation
+#| fig-cap: "Total standing biomass per functional group removed along the precipitation gradient."
+#| echo: false
+#| warning: false
+#| message: false
+
+# load in figure
+tar_read(fig_fg_biomass_treatment_precipitation)
 ```
 
 ```{r}
@@ -110,6 +132,7 @@ total_comp_model_results |>
     )
   )
 ```
+
 
 ```{r}
 #| label: tbl-results-total-biomass-contrasts
@@ -249,6 +272,40 @@ tar_read(fig_F_comp_precipitation_contrast)
 # print in results
 tar_read(fig_F_comp_temperature_contrast)
 ```
+
+#### Root biomass
+
+#```{r}
+##| label: tbl-results-forb-biomass-model
+##| echo: false
+##| warning: false
+##| message: false
+#
+## load in results
+#tar_load(F_comp_model_results_table)
+#
+#F_comp_model_results_table
+#```
+#
+#```{r}
+##| label: fig-results-forb-precipitation-biomass
+##| echo: false
+##| warning: false
+##| message: false
+#
+## print in results
+#tar_read(fig_F_comp_precipitation_contrast)
+#```
+#
+#```{r}
+##| label: fig-results-forb-biomass-temperature
+##| echo: false
+##| warning: false
+##| message: false
+#
+## print in results
+#tar_read(fig_F_comp_temperature_contrast)
+#```
 
 ### Functional group richness effect
 
