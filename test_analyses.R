@@ -82,5 +82,19 @@ plot_model(fit_1) +
   geom_hline(yintercept = 0, colour = "grey60") +
   theme_bw()
 
-plot_model(fit_1, type = "slope")
 plot_model(fit_1, type = "pred")
+
+
+fit_2 <- lmer(
+  log1p(root_biomass) ~
+    fg_removed + temperature_scaled + precipitation_scaled +
+    (1|siteID/blockID),
+  data = test2
+)
+
+tidy(fit_2)
+plot_model(fit_2) +
+  geom_hline(yintercept = 0, colour = "grey60") +
+  theme_bw()
+
+plot_model(fit_2, type = "pred")
