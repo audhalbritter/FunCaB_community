@@ -78,6 +78,109 @@ figure_plan <- list(
   ),
 
   tar_target(
+    name = factorial_comparisons_overview,
+    command = {
+      primary_comparisons <- list(
+        "G removal vs control (F remains)" = c(-1, 1, 0, 0),
+        "F removal vs control (G remains)" = c(-1, 0, 1, 0),
+        "GF removal vs control"            = c(-1, 0, 0, 1)
+      )
+
+      factorial_comparisons <- list(
+        "GF removal vs F removal"                       = c(0, 0, -1, 1),
+        "GF removal vs G removal"                       = c(0, -1, 0, 1),
+        "(GF removal - F removal) - (G removal - ctrl)" = c(1, -1, -1, 1)
+      )
+
+      treatments <- c("Control", "G removal", "F removal", "GF removal")
+
+      # 2. Define pie composition: always 3 equal thirds (B always Present)
+      composition <- tribble(
+        ~treatment,   ~group, ~status,   ~prop,
+        "Control",    "B",    "Present", 1/3,
+        "Control",    "G",    "Present", 1/3,
+        "Control",    "F",    "Present", 1/3,
+
+        "G removal",  "B",    "Present", 1/3,
+        "G removal",  "G",    "Removed", 1/3,
+        "G removal",  "F",    "Present", 1/3,
+
+        "F removal",  "B",    "Present", 1/3,
+        "F removal",  "G",    "Present", 1/3,
+        "F removal",  "F",    "Removed", 1/3,
+
+        "GF removal", "B",    "Present", 1/3,
+        "GF removal", "G",    "Removed", 1/3,
+        "GF removal", "F",    "Removed", 1/3
+      ) %>%
+        mutate(
+          group  = factor(group, levels = c("B", "G", "F")),
+          status = factor(status, levels = c("Present", "Removed"))
+        )
+
+      # 3. Combine contrasts and keep ONLY active treatments (weight != 0)
+      build_pie_df <- function(comp_list, set_label) {
+        bind_rows(lapply(names(comp_list), function(cname) {
+          data.frame(
+            set = set_label,
+            comparison = cname,
+            treatment = treatments,
+            weight = comp_list[[cname]],
+            stringsAsFactors = FALSE
+          )
+        })) %>%
+          mutate(comparison = factor(comparison, levels = names(comp_list)))
+      }
+
+      df_pies <- bind_rows(
+        build_pie_df(primary_comparisons, "Primary Comparisons"),
+        build_pie_df(factorial_comparisons, "Factorial Comparisons")
+      ) %>%
+        filter(weight != 0) %>%
+        mutate(treatment = factor(treatment, levels = treatments)) %>%
+        left_join(composition, by = "treatment", relationship = "many-to-many") %>%
+        arrange(comparison, treatment, group)
+
+      # 4. Plot pie charts with washed-out wedges for removed functional groups
+      ggplot(df_pies, aes(x = 1, y = prop, fill = group, alpha = status)) +
+        geom_col(width = 1, color = "grey30", linewidth = 0.4) +
+        coord_polar(theta = "y") +
+        facet_grid(comparison ~ treatment, drop = FALSE) +
+        scale_fill_manual(
+          values = c(
+            "B" = "#BC94D1",  # Purple
+            "G" = "#79BA47",  # Green
+            "F" = "#CC8E3D"   # Orange
+          ),
+          name = "Functional Group"
+        ) +
+        scale_alpha_manual(
+          values = c("Present" = 1.0, "Removed" = 0.15),
+          name = "Status"
+        ) +
+        guides(
+          fill  = guide_legend(override.aes = list(alpha = 1)),
+          alpha = guide_legend(override.aes = list(fill = "grey40"))
+        ) +
+        labs(
+          title = "Experimental Contrasts by Functional Group Presence",
+          subtitle = "Full color = present; washed-out = removed"
+        ) +
+        theme_void(base_size = 11) +
+        theme(
+          plot.title = element_text(face = "bold", hjust = 0.5, margin = margin(b = 4)),
+          plot.subtitle = element_text(hjust = 0.5, color = "grey30", margin = margin(b = 12)),
+          strip.text.x = element_text(face = "bold", margin = margin(b = 6)),
+          strip.text.y = element_text(angle = 0, hjust = 0, margin = margin(l = 8)),
+          legend.position = "top",
+          legend.box = "horizontal",
+          panel.spacing = unit(0.6, "lines")
+        )
+
+    }
+  ),
+
+  tar_target(
     name = fig_removed_biomass_comparison,
     command = {
       standardised_removed_biomass_site %>%

@@ -183,7 +183,7 @@ tar_read(fig_B_comp_precipitation_contrast)
 tar_read(fig_B_comp_temperature_contrast)
 ```
 
-The results could also be presented thus:
+The results could also be presented thus (maybe better, since we don't really have continuous climate gradients):
 
 ```{r}
 #| label: fig-results-bryophyte-biomass-temperature-contrasts
