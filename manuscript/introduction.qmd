@@ -12,13 +12,17 @@ library(tarchetypes)
 
 ## Introduction
 
+
+
 **Research questions**
 
--   How does removal of plant functional groups and climate affect standing biomass?
+-   How does removal of plant functional groups and climate affect standing plant biomass?
 
 -   Are these responses consistent along climate gradients or are there context dependencies?
 
--   Other responses: omposition, richness, diversity, evenness, traits?
+-   *cut* Other responses: composition, richness, diversity, evenness, traits?
+
+-   How does plant functional group removal affect root biomass?
 
 -   **Does total biomass compensation in response to functional group removal vary along climate gradients?**
 
@@ -26,8 +30,10 @@ library(tarchetypes)
 
 -   Null hypothesis: all groups affect and respond to each other equally. Symmetric effects/responses. Remove group in lowland = competitive release. Remove group in the alpine: facilitation loss (because of stress gradient hypothesis)
 
--   Stronger effects for graminoids (they have strong competitive effects, respond fast to warming). Hierarchy: gram, forb, bryo
+-   Stronger effects for graminoids (they have strong competitive effects, fast response to warming). Hierarchy: graminoids, forbs, bryophytes.
 
--   Bryophytes control immigration
+-   Bryophytes control immigration (soil temperature, moisture, access to exposed soil)
+
+-   Root biomass 
 
 -   Response: opposite hierarchy for response, forb and bryo have stronger responses
