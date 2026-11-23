@@ -33,9 +33,11 @@ The removals were done annually at peak growing season between 2015 and 2022. In
 
 Above ground biomass was collected annually from all experimental plots. The biomass was harvested for each plot, separating each functional group (graminoids, forbs, bryophytes), drying it to constant mass at 60°C and weighing.
 
-In 2022, the whole experiment was harvested and the above ground biomass from all plant functional groups in all plots was removed. The biomass was also dried at 60°C and weighed. The biomass from the plant functional groups from the removal treatments is hereafter called *removed biomass*. And the biomass from the remaining plant functional groups is hereafter called *standing biomass*.
+In 2022, the whole experiment was harvested and the above ground biomass from all plant functional groups in all plots was removed. The biomass was also dried at 60°C and weighed. The biomass from the plant functional groups from the removal treatments is hereafter called *removed biomass*. The biomass from the remaining plant functional groups is hereafter called *standing biomass*.
 
-#### Belowground biomass?
+#### Root biomass
+
+Root biomass was harvested in 2022 from the edge of each plot using ingrowth cores installed in 2021 (g m^3^). (why the edge?). The cores were washed and sieved, and the roots retrieved and weighed to calculated their wet mass. They were then freeze dried to calculate root biomass and root dry matter content (dry root biomass/wet root biomass). See FUNDER paper for further details.
 
 #### Plant Community Composition
 
@@ -43,17 +45,16 @@ Plant community composition recorded annually between 2015 and 2019 across all e
 
 ### Data preparation
 
-
-
 ### Analysis
 
-Using *removed biomass* in 2015 and *standing biomass* in 2022 (remaining biomass after removal).
+
+Using *standing biomass* in 2022 (remaining biomass after removal).
 
 Calculate two functional group removal treatments:
 
--   functional group richness (number of functional group present: 0, 1, 2, 3)
+- functional group richness (number of functional group present: 0, 1, 2, 3)
 
--   factorial functional group remaining
+- factorial functional group remaining
 
 ```{r}
 #| label: tbl-removal-treatments
@@ -103,11 +104,13 @@ To test how functional group richness (i.e. number of remaining functional group
 
 *2-way model*: standing biomass \~ fg_richness + precipitation_scaled + temperature_scaled + fg_richness:precipitation_scaled + fg_richness:temperature_scaled + precipitation_scaled:temperature_scaled + (1\|siteID/blockID)
 
-**Factorial functional group:** only 2-way interactions
+**Factorial functional group:** 
+
+Due to limited power, only 2-way interactions are considered for the factorial functional group analysis.
 
 How does functional group removal affect standing biomass:\
-Response: total standing biomass\
-Predictor: FG removed x climate
+**Response**: total standing biomass\
+**Predictor**: FG removed x climate
 
 ```{r}
 #| label: full-model
@@ -116,31 +119,38 @@ Predictor: FG removed x climate
 
 mod_B_comp <- glmmTMB(
   total_biomass ~
+    # main effects
+  F_treat +
+  B_treat +
+  B_treat +
+  temperature_scaled +
+  precipitation_scaled +
+    # treatment interations
   G_treat:F_treat +
   G_treat:B_treat +
   F_treat:B_treat +
-  temperature_scaled * precipitation_scaled +
-  G_treat * temperature_scaled +
-  G_treat * precipitation_scaled +
-  F_treat * temperature_scaled +
-  F_treat * precipitation_scaled +
-  B_treat * temperature_scaled +
-  B_treat * precipitation_scaled +
+    #climate interaction
+  temperature_scaled:precipitation_scaled +
+    #climate and treatment interactions
+  G_treat:temperature_scaled +
+  G_treat:precipitation_scaled +
+  F_treat:temperature_scaled +
+  F_treat:precipitation_scaled +
+  B_treat:temperature_scaled +
+  B_treat:precipitation_scaled +
   (1 | siteID/blockID),
   family = Gamma(link = "log"),
   data = standing_biomass_22_wide
 )
 ```
 
-*Contrasts*: compare removal treatment vs intact control (mean climate)
-Holm adjustments...
-Biomass ratios...
+*Contrasts*: to test for the effect of each functional group on the above-ground biomass quantities alone and in combination with other functional groups along both climate gradients, we compare each single-presence treatment with the control plot, and 
 
 **PART 2: Functional group analysis**
 
-For subset of functional group remaining, i.e. here only described fro bryophyte remaining:\
-Response = bryophyte biomass\
-Predictors = the *other* two removals (`G_treat`, `F_treat`) × climate\
+For subset of functional group remaining, i.e. here only described for plots where bryophytes are present:\
+**Response** = bryophyte biomass\
+**Predictors** = the *other* two removals (`G_treat`, `F_treat`) × climate\
 
 ```{r}
 #| label: bryophyte-model
@@ -149,43 +159,102 @@ Predictors = the *other* two removals (`G_treat`, `F_treat`) × climate\
 
 mod_B_comp <- glmmTMB(
   B ~
-    G_treat * F_treat * temperature_scaled +
-    G_treat * F_treat * precipitation_scaled +
+    # main effects
+    G_treat +
+    F_treat +
+    temperature_scaled +
+    precipitation_scaled +
+    # treatment interaction
+    G_treat:F_treat +
+    # climate interaction
     temperature_scaled:precipitation_scaled +
+    # treatment and climate interactions
+    G_treat:F_treat:temperature_scaled +
+    G_treat:F_treat:precipitation_scaled +
     (1 | siteID/blockID),
   family = Gamma(link = "log"),
   data = B_comp_dat
 )
 ```
 
-**Climate dependent contrasts**: keep P constant vary T and vice versa.
+**Testing for climate and functional group effects**
+Main effects of the above model, replicated for forbs and graminoids, are extracted from the model summary.
+To dig deeper into the climate-dependent contrasts, and the effects of each functional group's presence on the above-ground biomass of the target functional group (bryophytes in the example above), we computed estimated marginal means from the fitted models using the `emmeans` package. Group means of the treatments and control were then compared along each climate gradient, once for temperature (precipitation kept constant) and once for precipitation (temperature kept constant).
 
-*Primary contrasts (vs control):*
-
-Test contrasts of G removal, F removal, and GF removal versus control (neither G nor F removed).
+A description of the pairwise comparisons can be found below:
 
 |               | **F remains** | **F removed** |
 |---------------|:--------------|:--------------|
 | **G remains** | control       | F removal     |
 | **G removed** | G removal     | GF removal    |
 
-*Does removal of FG depend on other FG:*
 
-|               | **F kept** | **F removed** |
-|---------------|:-----------|:--------------|
-| **G kept**    | control    | F only        |
-| **G removed** | G only     | GF            |
+*Primary contrasts (functional group vs control):*
+To test for the primary effects of  contrasts of G removal, F removal, and GF removal versus control (neither G nor F removed).
+
+\
+*Does functional group removal depend on other functional groups:*
 
 What is the extra effect of adding G removal on top of F removal or vice versa:
 
--   GF vs F only
+- GF vs F only
 
--   GF vs G only
+- GF vs G only
 
 Is the effect of removing one FG the same as when the other group is still present? (interaction)
 
--   Effect of removing G when F is kept: `G − control`
+- Effect of removing G when F is kept: `G − control`
 
--   Effect of removing G when F is already gone: `GF − F`
+- Effect of removing G when F is already gone: `GF − F`
 
--   Does removal of G depend on F: `(GF − F) − (G − control)`
+- Does removal of G depend on F: `(GF − F) − (G − control)`\
+
+```{r}
+#| label: fig-factorial-comparisons-overview
+#| fig-cap: "Contrasts among functional group treatments for the bryophyte-present model illustrated above. Each row corresponds to a contrast, each column to an experimental treatment. Functional groups present at the end of the experiment are shown in full colour, those that have been experimentallly removed are washed out. The bottom row represents the `(GF − F) − (G − control)` contrast."
+#| echo: false
+#| warning: false
+#| message: false
+
+tar_read(factorial_comparisons_overview)
+```
+
+
+**PART 3: Below-ground biomass analysis**
+
+How does functional group removal affect belowground biomass:\
+**Response**: root biomass (g m^3^)\
+**Predictor**: FG removed x climate
+
+Since the roots are pooled across functional groups, our model is simpler:
+```{r}
+#| label: root-biomass-model
+#| echo: true
+#| eval: false
+
+mod_root_biomass <- glmmTMB(
+  root_biomass ~
+    # main effects
+  F_treat +
+  B_treat +
+  B_treat +
+  temperature_scaled +
+  precipitation_scaled +
+    # treatment interations
+  G_treat:F_treat +
+  G_treat:B_treat +
+  F_treat:B_treat +
+    #climate interaction
+  temperature_scaled:precipitation_scaled +
+    #climate and treatment interactions
+  G_treat:temperature_scaled +
+  G_treat:precipitation_scaled +
+  F_treat:temperature_scaled +
+  F_treat:precipitation_scaled +
+  B_treat:temperature_scaled +
+  B_treat:precipitation_scaled +
+  (1 | siteID/blockID),
+  family = Gamma(link = "log"),
+  data = root_biomass
+)
+```
